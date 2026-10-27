@@ -1,5 +1,7 @@
 # OS — um pequeno kernel RISC-V
 
+[Documentação online](https://raiagues.github.io/OS/) · [Compilação e testes](https://github.com/Raiagues/OS/actions/workflows/ci.yml)
+
 Projeto de sistema operacional desenvolvido em C e assembly RISC-V na disciplina PCSEF / SEOC da Ensimag, em 2023. O kernel implementa console, interrupções de timer, troca de contexto, escalonamento round-robin, suspensão e término de processos.
 
 Este repositório organiza a versão final da disciplina e inclui correções para executá-la hoje. O caminho principal usa **QEMU padrão, máquina `virt`, com saída no terminal**. O console gráfico original continua disponível para quem tem o QEMU modificado com a máquina `cep`.
@@ -109,7 +111,7 @@ Captura do framebuffer real da plataforma CEP durante a validação. A execuçã
 - [Publicar no GitHub e configurar o Pages](docs/publishing.md)
 - [Créditos e proveniência dos fontes](docs/provenance.md)
 
-O GitHub Pages pode apresentar estes guias em `https://raiagues.github.io/OS/` depois de habilitado nas configurações do repositório. O kernel é executado localmente no QEMU; o site não inclui um emulador no navegador.
+Os guias estão publicados no [GitHub Pages](https://raiagues.github.io/OS/). O kernel é executado localmente no QEMU; o site não inclui um emulador no navegador.
 
 ## Origem e créditos
 
