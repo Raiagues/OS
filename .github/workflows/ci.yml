@@ -19,7 +19,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends make gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf qemu-system-misc python3
       - name: Check tools
-        run: make check
+        run: make PLATFORM=virt check
       - name: Compile and run QEMU tests
         run: make test
       - name: Compile the historical CEP backend
@@ -34,42 +34,3 @@ jobs:
             build/**/*.map
             build/**/*.log
           if-no-files-found: ignore
-
-  documentation:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build documentation
-        uses: actions/jekyll-build-pages@v1
-        with:
-          source: ./docs
-          destination: ./_site
-      - name: Save documentation site
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation-site
-          path: _site/
-      - name: Prepare Pages artifact
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site/
-
-  deploy-pages:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: [build-and-test, documentation]
-    runs-on: ubuntu-24.04
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    concurrency:
-      group: pages
-      cancel-in-progress: false
-    steps:
-      - name: Publish documentation
-        id: deployment
-        uses: actions/deploy-pages@v4

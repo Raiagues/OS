@@ -1,6 +1,5 @@
 #!/bin/sh
-# Optional helper for an existing Ensimag course installation on Linux x86_64.
-# Normal installations should use the distribution packages documented in README.
+# Environment for the original Ensimag QEMU CEP installation on Linux x86_64.
 set -eu
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$repo_dir"

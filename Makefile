@@ -1,6 +1,6 @@
 .DEFAULT_GOAL := all
 
-PLATFORM ?= virt
+PLATFORM ?= cep
 SELFTEST ?= 0
 CROSS_COMPILE ?= riscv64-unknown-elf-
 QEMU ?= qemu-system-riscv64
@@ -43,7 +43,7 @@ ASOURCES := $(wildcard src/*.S)
 OBJECTS := $(patsubst src/%.c,$(BUILD)/%.o,$(CSOURCES)) $(patsubst src/%.S,$(BUILD)/%.o,$(ASOURCES))
 QEMUFLAGS := -machine $(PLATFORM) -bios none -kernel $(KERNEL) -m $(MEMORY) -smp 1
 
-.PHONY: all check run debug rung test clean help FORCE
+.PHONY: all check run run-serial debug rung test clean help FORCE
 all: $(KERNEL)
 
 $(BUILD):
@@ -69,14 +69,25 @@ check:
 	@sh scripts/check-tools.sh '$(CROSS_COMPILE)' '$(QEMU)' '$(PLATFORM)' '$(RISCV_ARCH)' '$(PYTHON)'
 
 run: $(KERNEL)
+ifeq ($(PLATFORM),cep)
+	$(QEMU) $(QEMUFLAGS) -name "OS - console graphique" -serial mon:stdio -display sdl,show-cursor=on
+else
+	$(QEMU) $(QEMUFLAGS) -nographic
+endif
+
+run-serial: $(KERNEL)
 	$(QEMU) $(QEMUFLAGS) -nographic
 
 debug: $(KERNEL)
+ifeq ($(PLATFORM),cep)
+	$(QEMU) $(QEMUFLAGS) -name "OS - console graphique" -serial mon:stdio -display sdl,show-cursor=on -gdb tcp:127.0.0.1:$(GDB_PORT) -S
+else
 	$(QEMU) $(QEMUFLAGS) -nographic -gdb tcp:127.0.0.1:$(GDB_PORT) -S
+endif
 
 rung: $(KERNEL)
 ifeq ($(PLATFORM),cep)
-	$(QEMU) $(QEMUFLAGS) -serial mon:stdio -display sdl
+	$(QEMU) $(QEMUFLAGS) -name "OS - console graphique" -serial mon:stdio -display sdl,show-cursor=on
 else
 	@printf '%s\n' 'The virt backend uses a terminal. Run make run, or select PLATFORM=cep with the course QEMU.'
 	@exit 1
@@ -94,8 +105,11 @@ clean:
 help:
 	@printf '%s\n' \
 	  'make check     Check the compiler, QEMU and Python' \
-	  'make           Build build/virt/kernel.elf' \
-	  'make run       Run the demonstration (Ctrl+A, then X to quit)' \
+	  './run.sh       Open the original CEP graphical interface' \
+	  'make           Build build/cep/kernel.elf (course toolchain required)' \
+	  'make run       Open the CEP graphical window' \
+	  'make PLATFORM=virt run   Optional serial mode with upstream QEMU' \
+	  'make run-serial          CEP serial output without a window' \
 	  'make test      Check boot, sleep, termination and timer preemption' \
 	  'make debug     Start halted; GDB listens on 127.0.0.1:1234' \
 	  'make PLATFORM=cep rung   Graphical mode with the custom course QEMU' \
