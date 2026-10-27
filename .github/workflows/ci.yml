@@ -1,0 +1,52 @@
+name: Kernel CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RISC-V tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends make gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf qemu-system-misc python3
+      - name: Check tools
+        run: make check
+      - name: Compile and run QEMU tests
+        run: make test
+      - name: Compile the historical CEP backend
+        run: make PLATFORM=cep
+      - name: Save binaries and test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: riscv-kernel-and-test-logs
+          path: |
+            build/**/*.elf
+            build/**/*.map
+            build/**/*.log
+          if-no-files-found: ignore
+
+  documentation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build documentation
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site
+      - name: Save documentation site
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-site
+          path: _site/

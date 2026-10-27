@@ -1,5 +1,6 @@
 /build/
 /site/
+/_site/
 /docs/_site/
 /docs/.jekyll-cache/
 *.o

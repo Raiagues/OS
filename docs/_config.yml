@@ -1,0 +1,7 @@
+title: OS · Kernel RISC-V
+description: Projeto didático de sistema operacional em C e assembly RISC-V.
+url: https://raiagues.github.io
+baseurl: /OS
+lang: pt-BR
+markdown: kramdown
+highlighter: rouge
