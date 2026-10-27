@@ -3,6 +3,11 @@
 set -eu
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$repo_dir"
+# Keep compiler and capture temporary files with the other build artifacts.
+if [ -z "${TMPDIR-}" ]; then
+    mkdir -p build/tmp
+    export TMPDIR="$repo_dir/build/tmp"
+fi
 course_tools=${COURSE_TOOLS:-/matieres/4MMPCSEA/xinul}
 export CROSS_COMPILE="$course_tools/bin/riscv64-unknown-elf-"
 export QEMU="$course_tools/bin/qemu-system-riscv64"

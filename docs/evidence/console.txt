@@ -1,0 +1,9 @@
+OS / RISC-V RV64 / QEMU CEP
+This line will be removed by FF.Console controls (8x8 characters)
+AB
+CD
+ABC
+ABC
+ZA	B
+	ZRows 2-6: LF, BS, CR, HT. Row 9: tab at the right edge.
+EVIDENCE: CONSOLE PASS

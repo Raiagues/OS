@@ -22,8 +22,11 @@ jobs:
         run: make PLATFORM=virt check
       - name: Compile and run QEMU tests
         run: make test
-      - name: Compile the historical CEP backend
-        run: make PLATFORM=cep
+      - name: Compile every CEP demonstration with the current compiler
+        run: |
+          for demo in processes pixels console scroll uart clock; do
+            make PLATFORM=cep DEMO="$demo"
+          done
       - name: Save binaries and test logs
         if: always()
         uses: actions/upload-artifact@v4
@@ -33,4 +36,31 @@ jobs:
             build/**/*.elf
             build/**/*.map
             build/**/*.log
+          if-no-files-found: ignore
+
+  cep-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute the original CEP machine and capture its framebuffer
+        run: |
+          docker run --rm --platform linux/amd64 --ulimit core=0 \
+            --tmpfs /tmp:rw,size=64m \
+            --user "$(id -u):$(id -g)" \
+            --mount "type=bind,source=$PWD,target=/workspace" \
+            --workdir /workspace --entrypoint sh \
+            sebastienviardot/pcsefriscv@sha256:701a53695beefb420e003b39c18c04f3c43de67cddbcf8ab534fa8378855e250 \
+            -ec '
+              export CROSS_COMPILE=/matieres/4MMPCSEA/xinul/bin/riscv64-unknown-elf-
+              export QEMU=/matieres/4MMPCSEA/xinul/bin/qemu-system-riscv64
+              export RISCV_ARCH=rv64ima
+              python3 scripts/capture_evidence.py
+            '
+      - name: Save actual CEP images, UART logs and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cep-framebuffer-evidence
+          path: build/evidence/
           if-no-files-found: ignore

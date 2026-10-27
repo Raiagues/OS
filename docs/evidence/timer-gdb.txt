@@ -1,0 +1,13 @@
+entry () at src/crt0.S:6
+6	    csrw mie, zero
+Breakpoint 1 at 0x2240: file src/time.c, line 30.
+
+Breakpoint 1, trap_handler (mcause=9223372036854775815) at src/time.c:30
+30	    if ((mcause & (1ULL << 63)) != 0 &&
+$1 = 0x8000000000000007
+$2 = 0x114c
+$3 = 0x80
+$4 = 0xa00001880
+0x200bff8:	0x000000000044dc8b
+0x2004000:	0x000000000044c43b
+[Inferior 1 (process 1) detached]

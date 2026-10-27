@@ -1,0 +1,14 @@
+entry () at src/crt0.S:6
+6	    csrw mie, zero
+Breakpoint 1 at 0x1c7c: file src/processus.c, line 13.
+
+Breakpoint 1, ordonnance () at src/processus.c:13
+13	    return csr_read_clear(mstatus, MSTATUS_MIE);
+$1 = 4
+$2 = 0
+$3 = 0
+$4 = 1
+$5 = 0
+$6 = 0x14090
+$7 = 0x14090
+[Inferior 1 (process 1) detached]

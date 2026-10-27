@@ -1,0 +1,169 @@
+{
+  "generated_utc": "2026-10-27T13:11:01.851739+00:00",
+  "status": "PASS",
+  "platform": "cep",
+  "display_backend": "none",
+  "capture_method": "Actual 1280x720 framebuffer at 0x80000000 read with QMP pmemsave; lossless PNG encoding",
+  "qemu": "QEMU emulator version 6.2.50 (v6.2.0-238-g8b39174f19-dirty)",
+  "compiler": "riscv64-unknown-elf-gcc (GCC) 11.1.0",
+  "architecture": "rv64ima",
+  "sources_sha256": {
+    "src/Makefile": "7c617c24a789574e80d30762c2d6f39d1ddae7fd662e2deefed76e03bf868e41",
+    "src/cep_platform.h": "76a0f6da3b5740f016321d29d353065646d895c6142d1e5f51e23138c32c4e7e",
+    "src/console.c": "aa898bd3e0e785318a8ab4db227c56bf8e675ed378a91be7666eb25fae5df477",
+    "src/console.h": "bf6b8b522aea49e15a5e666934d2fcc940fa6f4992e46ceb13f69ef142084229",
+    "src/console_serial.c": "62b3960dee946c657a1cc4c1ea9fb956c18973e6b24bf4e1bfe50243497f7fba",
+    "src/cpu.h": "5cc2d28a2bbe5e11ce497fbc53410bb8f2b5c8f24b1f34e03de47555f7e3cc39",
+    "src/crt0.S": "c5cfaff51509427012c152491cc2f6aebecf9d35c0258b7667d669bdbc9dd54b",
+    "src/ctxt.S": "5eb6cb6733580d718fd18f857d4a6440f5d1b10ea599e2d7662e5b9a7aeb6231",
+    "src/ctype.h": "3aece136fae5f1de6a28a973b0993920c63360c7633a442ba5a5ee72d7784f3e",
+    "src/demos.c": "fbba92fceb3d74db4a15717724aa63ff61b65364af15ff80dc1dd09f1e86ada2",
+    "src/demos.h": "337da4d7c1ba72b8c6f34a22c7836caddca86d68e590c3bb3b3be5b973be6e08",
+    "src/div64.h": "6a628aa1573ad7558e43f5d9c16676cf6b80ffbbe6de2720380703bbd23c4bec",
+    "src/doprnt.c": "92b3baa16da9b82a747c263ee8fe9aaec7fc62800f15f88d60f248e30020bbce",
+    "src/doprnt.h": "e23b55214fd1ac5caa6637039a6bad08d53c304332c1e34868debd3712a8a13b",
+    "src/font.c": "64c8ddec439750fcee74bbfbfd710bde4ce039dabb2eef04518d08db7ee94b6b",
+    "src/font.h": "3c1e6de5ffd2139764521da868687f78939b60704ff8f021077fc39ec869ba76",
+    "src/inttypes.h": "636168e19f74d13b9911f7e96d49b162fbca5e6c780513ee5bdb8f7f8fd2624e",
+    "src/kernel.lds": "d6d258df1a514a682c4ff9707182abfe4a89f3b812be4c2201594c3d5122360d",
+    "src/printf.c": "24a775774aa9e972923ffd9bf49932223b58ca2b80e43b9be70ae3fd78073cd1",
+    "src/processus.c": "ff64a607dc4162bcc8190eb28c0ffd81650674c6ed599a0e736a2b94479c061d",
+    "src/processus.h": "3ecba30ba5a4af86cc40dcbde0dee7427616a9483718e7b1729a8d3b15adbddd",
+    "src/sprintf.c": "4e3e0def4cb31ff722ee5b60978ab69b48d52193cc94f197535cf997fa85d285",
+    "src/start.c": "071c0fbe89533812dcaa662b42f786df728d09087e20f58da4bca1a16fc5c09a",
+    "src/stdarg.h": "e4486e0ac957bd4af610516c7a5dd5b10a827331a205f1c22d23a713666a2cc7",
+    "src/stddef.h": "2d4c9a083e016ab82b1d18e06b036338fc18690ec139dea108f55a8b6787bc9c",
+    "src/stdfct.c": "e58b2d830b7b947044d52be74d7874ff1dda7bda0e4a61fdba21adc08e8acb05",
+    "src/stdio.h": "1ff66973881e2febd69b7d93362a63d2b820a3becf0edb251180852a1ea921c6",
+    "src/stdlib.h": "55c39f3f0c96a2c68d8e675bdac502c58d38cc05302bd192e1d25f35cda7df96",
+    "src/string.c": "956fb293cbfe8bbc4da4115b0b19bc36ec28cb8024a029f1bbb553b839ea952a",
+    "src/string.h": "7f754f9d4cdf6c8ec03f06ba39bdf213437fecb02a0414e5bb54e4f48f8e283d",
+    "src/strtoul.c": "32ee0ea25edbeb8700293323b7c9a81c8903f506cecff18d1675250f7936ee5e",
+    "src/test_student.c": "8522eb3262e96ef2fa42b21dca842c7b057bc9d68aa83de47c5f669673763af0",
+    "src/test_student.h": "526f36d4367cccb1bb7bf7cf7a2321b2d7523d4b7ab720bd190da0d71327717c",
+    "src/time.c": "788ec20671dce481cb2dac3cc390a4611139f36d6071d9980ad96ab92ef780dc",
+    "src/time.h": "fdcfb7997aae37f8e54f8d5888146a88857994fc80d44ce58cfe4d3eb4f4a16e",
+    "src/traitant.S": "635c792f206ec776b419adf2064694eb469217db5dee480affd14067a63110c5",
+    "src/types.h": "b0075e2e0f55aa810f764b7c07d76922978eb8ff6f51ad263bbd24510da59fec",
+    "src/uart.c": "99666a2334065745e01d2d00f10b1dfe1bdd8f4a392c6f323889410f241345ad",
+    "src/uart.h": "0300ce250bc4e9a04d730daddc276fcbda760266933d672421de5d0fd3f5ab6a"
+  },
+  "scenarios": [
+    {
+      "mode": "pixels",
+      "make": "make PLATFORM=cep DEMO=pixels SELFTEST=0 all",
+      "kernel_sha256": "02ff81fae770db8a77f8c3f1578d7ec01ba9aa548af7760e77dd95249fd14582",
+      "uart_log": "pixels.txt",
+      "uart_sha256": "e03ab7e600339d8bd8804943aeb5d0b7f279518a0a395dc90211dcca1ba22aa5",
+      "captures": [
+        {
+          "file": "pixel-red.png",
+          "trigger": "EVIDENCE: PIXELS COLOR=red",
+          "settle_seconds": 0,
+          "sha256": "d822615725f3098c07e1b963fa8775bae588d249b946b8df24289b05e76a318c"
+        },
+        {
+          "file": "pixel-green.png",
+          "trigger": "EVIDENCE: PIXELS COLOR=green",
+          "settle_seconds": 0,
+          "sha256": "4179da4df36aebfb33140d4d453a5a2c667c6770def391a8510e7b354654282f"
+        },
+        {
+          "file": "pixel-blue.png",
+          "trigger": "EVIDENCE: PIXELS COLOR=blue",
+          "settle_seconds": 0,
+          "sha256": "e2a39092aa00542c0e3e87a7bd7d5c0e0bb35de3db9310179532355368a9649b"
+        },
+        {
+          "file": "pixels.png",
+          "trigger": "EVIDENCE: PIXELS PASS",
+          "settle_seconds": 0,
+          "sha256": "2da35fde47e4315bd7949671ce59b3cb780a1168b6cee6ca5b19b85404935b1f"
+        }
+      ]
+    },
+    {
+      "mode": "console",
+      "make": "make PLATFORM=cep DEMO=console SELFTEST=0 all",
+      "kernel_sha256": "d0faa221c79231aa35ff1b40d2c6a0bbd252c038c9c6ccaba43ede96c6519c5e",
+      "uart_log": "console.txt",
+      "uart_sha256": "3130f8758a385a715cf3b28a2a1ac9e06f2e31a0c7f9170588e36e4b2b62ae7f",
+      "captures": [
+        {
+          "file": "console.png",
+          "trigger": "EVIDENCE: CONSOLE PASS",
+          "settle_seconds": 0,
+          "sha256": "a153cbe4f8e9b8ed2c2814411268e42b5972af041b4925d564963b9af2fbe5e6"
+        }
+      ]
+    },
+    {
+      "mode": "scroll",
+      "make": "make PLATFORM=cep DEMO=scroll SELFTEST=0 all",
+      "kernel_sha256": "9e52ecc17a549a45cc76d00f83488fe6688f2e95e460a686f8c1d478a69458c7",
+      "uart_log": "scroll.txt",
+      "uart_sha256": "5b89f8495d4e25283ad1fe2a0174e6b533e288d5408fccfae681fea51f937a06",
+      "captures": [
+        {
+          "file": "scroll.png",
+          "trigger": "EVIDENCE: SCROLL PASS written=100 first_visible=12 last_visible=99",
+          "settle_seconds": 0,
+          "sha256": "f55fc741194817f1f6e5654e08ed489a8631863ff6b9795388015dff997a3598"
+        }
+      ]
+    },
+    {
+      "mode": "uart",
+      "make": "make PLATFORM=cep DEMO=uart SELFTEST=0 all",
+      "kernel_sha256": "431b247a8f7ea944b53ebf1ef58eeb334f6d266f1891d1be94574c48cf767dcd",
+      "uart_log": "uart.txt",
+      "uart_sha256": "98fa3cb13a22c856c6928932896c6b36710d66d1e7a8143199d7ca9037ddc129",
+      "captures": [
+        {
+          "file": "uart.png",
+          "trigger": "EVIDENCE: UART PASS direct_tx=1 console_mirror=1",
+          "settle_seconds": 0,
+          "sha256": "5a2501d7597fc33a73cd7129681db32e14f84d2f60d0364c9b02094fe81835d2"
+        }
+      ]
+    },
+    {
+      "mode": "clock",
+      "make": "make PLATFORM=cep DEMO=clock SELFTEST=0 all",
+      "kernel_sha256": "9a8a838c5da438a1f0f6f3b4d2cdbac680ba8465bbcd03996b8d7a52d962d0f0",
+      "uart_log": "clock.txt",
+      "uart_sha256": "e57bca0c83be1b9bdc5e36ba4701fdd3cc51d323e011f95e18a0f1c386b75803",
+      "captures": [
+        {
+          "file": "clock.png",
+          "trigger": "EVIDENCE: CLOCK PASS",
+          "settle_seconds": 0,
+          "sha256": "dd2668e2c6bf8e5dde7da61ebf2b73de13fe7fb5d5a8eaeb07c2dad7ee0581b6"
+        }
+      ]
+    },
+    {
+      "mode": "processes",
+      "make": "make PLATFORM=cep DEMO=processes SELFTEST=0 all",
+      "kernel_sha256": "ddc6a93765a1f67cbf34374d9f7c35365c9c9d821671a4929cff8decc7eb423c",
+      "uart_log": "processes.txt",
+      "uart_sha256": "26e2fbcbb91536de46c13c2213d429d274fe6b142fb468c3b92e89ab427b88cb",
+      "captures": [
+        {
+          "file": "processes-start.png",
+          "trigger": "Debut du sommeil de 4 s du processus 3",
+          "settle_seconds": 1.1,
+          "sha256": "dcfe1cb8a118acfe438b251864e57c7b2c9d94e9eabb93f2df3b0de666850746"
+        },
+        {
+          "file": "processes-end.png",
+          "trigger": "[OS] DEMO COMPLETE: proc1, proc2, proc3 finished; idle running.",
+          "settle_seconds": 1.1,
+          "sha256": "35008e30be3d769b96b69a4e739edcdb65ce23c27986e9aa853462df9e96afc2"
+        }
+      ]
+    }
+  ],
+  "integration_test": "make DEMO=processes test: passed",
+  "selftest_sha256": "615772cada7b3e4751d7920ad16caa1075af56be8bf9bcc7478df11b0644cf10"
+}

@@ -105,7 +105,7 @@ def main():
     try:
         for kernel in (args.demo, args.selftest):
             check_elf(args.readelf, kernel)
-        demo = run_kernel(args.qemu, args.demo, '[OS] DEMO COMPLETE: proc1, proc2, proc3 termines; idle actif.\n', args.timeout,
+        demo = run_kernel(args.qemu, args.demo, '[OS] DEMO COMPLETE: proc1, proc2, proc3 finished; idle running.\n', args.timeout,
                           args.demo.parent / 'qemu-demo.log')
         check_demo(demo)
         selftest = run_kernel(args.qemu, args.selftest, 'SELFTEST: ALL PASS\n', args.timeout,

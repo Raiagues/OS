@@ -2,6 +2,7 @@
 
 PLATFORM ?= cep
 SELFTEST ?= 0
+DEMO ?= processes
 CROSS_COMPILE ?= riscv64-unknown-elf-
 QEMU ?= qemu-system-riscv64
 PYTHON ?= python3
@@ -12,7 +13,21 @@ GDB_PORT ?= 1234
 CC := $(CROSS_COMPILE)gcc
 SIZE := $(CROSS_COMPILE)size
 READELF := $(CROSS_COMPILE)readelf
-BUILD := build/$(PLATFORM)$(if $(filter 1,$(SELFTEST)),-selftest)
+VALID_DEMOS := processes pixels console scroll uart clock
+ifeq ($(filter $(DEMO),$(VALID_DEMOS)),)
+$(error DEMO must be one of: $(VALID_DEMOS))
+endif
+ifneq ($(SELFTEST),0)
+ifneq ($(DEMO),processes)
+$(error SELFTEST requires DEMO=processes)
+endif
+endif
+ifneq ($(PLATFORM),cep)
+ifneq ($(filter $(DEMO),pixels console scroll),)
+$(error DEMO=$(DEMO) inspects the CEP framebuffer; use PLATFORM=cep)
+endif
+endif
+BUILD := build/$(PLATFORM)$(if $(filter 1,$(SELFTEST)),-selftest,$(if $(filter-out processes,$(DEMO)),-$(DEMO)))
 KERNEL := $(BUILD)/kernel.elf
 
 ifeq ($(PLATFORM),virt)
@@ -27,6 +42,7 @@ else
 $(error PLATFORM must be virt or cep)
 endif
 
+CPPFLAGS += -DDEMO_$(shell printf '%s' '$(DEMO)' | tr '[:lower:]' '[:upper:]')
 CPPFLAGS += -Isrc -DPLATFORM_$(shell printf '%s' '$(PLATFORM)' | tr '[:lower:]' '[:upper:]')
 ifeq ($(SELFTEST),1)
 CPPFLAGS += -DKERNEL_SELFTEST
@@ -70,7 +86,7 @@ check:
 
 run: $(KERNEL)
 ifeq ($(PLATFORM),cep)
-	$(QEMU) $(QEMUFLAGS) -name "OS - console graphique" -serial mon:stdio -display sdl,show-cursor=on
+	$(QEMU) $(QEMUFLAGS) -name "OS - graphical console" -serial mon:stdio -display sdl,show-cursor=on
 else
 	$(QEMU) $(QEMUFLAGS) -nographic
 endif
@@ -80,22 +96,22 @@ run-serial: $(KERNEL)
 
 debug: $(KERNEL)
 ifeq ($(PLATFORM),cep)
-	$(QEMU) $(QEMUFLAGS) -name "OS - console graphique" -serial mon:stdio -display sdl,show-cursor=on -gdb tcp:127.0.0.1:$(GDB_PORT) -S
+	$(QEMU) $(QEMUFLAGS) -name "OS - graphical console" -serial mon:stdio -display sdl,show-cursor=on -gdb tcp:127.0.0.1:$(GDB_PORT) -S
 else
 	$(QEMU) $(QEMUFLAGS) -nographic -gdb tcp:127.0.0.1:$(GDB_PORT) -S
 endif
 
 rung: $(KERNEL)
 ifeq ($(PLATFORM),cep)
-	$(QEMU) $(QEMUFLAGS) -name "OS - console graphique" -serial mon:stdio -display sdl,show-cursor=on
+	$(QEMU) $(QEMUFLAGS) -name "OS - graphical console" -serial mon:stdio -display sdl,show-cursor=on
 else
 	@printf '%s\n' 'The virt backend uses a terminal. Run make run, or select PLATFORM=cep with the course QEMU.'
 	@exit 1
 endif
 
 test:
-	$(MAKE) PLATFORM=virt SELFTEST=0 all
-	$(MAKE) PLATFORM=virt SELFTEST=1 all
+	$(MAKE) PLATFORM=virt DEMO=processes SELFTEST=0 all
+	$(MAKE) PLATFORM=virt DEMO=processes SELFTEST=1 all
 	$(PYTHON) scripts/test_qemu.py --qemu '$(QEMU)' --readelf '$(READELF)' \
 	  --demo build/virt/kernel.elf --selftest build/virt-selftest/kernel.elf
 
@@ -106,6 +122,7 @@ help:
 	@printf '%s\n' \
 	  'make check     Check the compiler, QEMU and Python' \
 	  './run.sh       Open the original CEP graphical interface' \
+	  './run.sh DEMO=pixels    Run a teaching demo (pixels/console/scroll/uart/clock)' \
 	  'make           Build build/cep/kernel.elf (course toolchain required)' \
 	  'make run       Open the CEP graphical window' \
 	  'make PLATFORM=virt run   Optional serial mode with upstream QEMU' \

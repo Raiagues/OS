@@ -15,7 +15,7 @@ if command -v "$qemu" >/dev/null 2>&1 && \
     exec make PLATFORM=cep run "$@"
 fi
 printf '%s\n' \
-  'A interface grafica precisa do QEMU da disciplina, com a maquina cep.' \
-  'O QEMU comum dos pacotes Ubuntu nao inclui essa maquina.' \
-  'Informe sua instalacao: COURSE_TOOLS=/caminho/xinul ./run.sh' >&2
+  'The graphical interface needs the course QEMU with the cep machine.' \
+  'The standard Ubuntu QEMU packages do not include that machine.' \
+  'Set your tool directory: COURSE_TOOLS=/path/to/xinul ./run.sh' >&2
 exit 1

@@ -1,79 +1,52 @@
 # OS — RISC-V
 
-Projeto de sistema operacional em C e assembly RISC-V, desenvolvido na disciplina PCSEF / SEOC da Ensimag em 2023.
+A small operating system written in C and RISC-V assembly for the PCSEF / SEOC course at Ensimag in 2023.
 
-A interface original abre em uma **janela do QEMU**: console gráfico de 1280 × 720, relógio e estados dos processos. O kernel implementa interrupções de timer, escalonamento round-robin, sono e término de processos.
+The original **QEMU CEP graphical console** has a 1280 × 720 framebuffer, an 8 × 8 font, a clock and a process-state display. The kernel also implements UART output, timer interrupts, round-robin scheduling, sleep and process termination.
 
-## Abrir a interface gráfica
+## Run
 
-Dentro desta pasta:
+With the course tools installed:
 
-```bash
+```sh
 ./run.sh
 ```
 
-O script compila e abre o QEMU com a máquina **CEP**, usada na disciplina. Neste computador, as ferramentas estão em `/matieres/4MMPCSEA/xinul`; não é necessário reinstalá-las. É preciso executar em uma sessão gráfica do Linux. Para sair, feche a janela do QEMU.
+Three processes sleep for 2, 3 and 4 seconds, twice each, then terminate. `idle` keeps running and the clock continues. Close the QEMU window to exit.
 
-A demonstração executa três processos que dormem por 2, 3 e 4 segundos. Depois que eles terminam, o kernel permanece ativo em `idle` e o relógio continua avançando.
+For a fresh setup, see **[Run and verify](docs/08-run-and-verify.md)**. It covers the course tools, a Docker environment with graphical output, and the serial-only alternative using standard QEMU packages.
 
-## Usar em outro computador
+## Small examples
 
-```bash
-git clone https://github.com/Raiagues/OS.git
-cd OS
+These examples use the kernel's existing functions, with ordinary text and pixels:
+
+```sh
+./run.sh DEMO=pixels    # Alphabet and digits, cycling through colors
+./run.sh DEMO=console   # Newline, tab, backspace, carriage return and clear
+./run.sh DEMO=scroll    # Write more lines than fit on screen
+./run.sh DEMO=uart      # Direct UART output and console output
+./run.sh DEMO=clock     # Run the clock with idle only
 ```
 
-A interface precisa do **QEMU modificado da disciplina, com suporte à máquina `cep`**, além de `make` e da toolchain RISC-V. O QEMU dos pacotes comuns do Ubuntu não inclui essa máquina.
+The examples are in [demos.c](src/demos.c). They were added to make the original features easy to run separately. The default process demonstration is in [test_student.c](src/test_student.c).
 
-Se você tem a instalação da disciplina em outro diretório:
+## How it works
 
-```bash
-COURSE_TOOLS=/caminho/para/xinul ./run.sh
-```
+Start with the **[guide](docs/README.md)**: QEMU and RISC-V, boot, pixels, UART, interrupts and processes. Each chapter points to the implementation, gives a small experiment and includes actual output.
 
-Esse diretório deve conter `bin/riscv64-unknown-elf-gcc` e `bin/qemu-system-riscv64`. O script configura os caminhos e, quando necessário no Ubuntu 24.04 x86-64, prepara a compatibilidade de `libaio` dentro de `build/`, sem alterar bibliotecas do sistema.
+The [inventory](docs/01-inventory.md) records the review of five local project copies and 62 commits. UART transmission and the process features were present. No working keyboard input was found; the keyboard-related commit contains an unfinished external-interrupt handler.
 
-## Alternativa pelo terminal
+## Tests
 
-Para estudar o kernel usando o QEMU padrão, há um backend serial separado:
-
-```bash
-sudo apt-get update
-sudo apt-get install -y make python3 gcc-riscv64-unknown-elf \
-  binutils-riscv64-unknown-elf qemu-system-misc
-make PLATFORM=virt run
-```
-
-Esse modo usa o terminal. Para sair: **Ctrl+A**, depois **X**.
-
-## Testes
-
-Com as ferramentas da disciplina:
-
-```bash
+```sh
 sh scripts/course-env.sh make test
+sh scripts/course-env.sh python3 scripts/capture_evidence.py
 ```
 
-Com as ferramentas instaladas pelos pacotes acima:
+The first command tests boot, sleep, termination, preemption and formatting bounds. The second runs the CEP examples and saves real framebuffer captures and UART logs in `build/evidence/`. [Recorded evidence](docs/evidence/) is included in the repository. GitHub Actions runs both toolchain and CEP checks.
 
-```bash
-make test
-```
+## Credits
 
-Os testes verificam boot, criação de tarefas, preempção, sono, término e limites de formatação. O GitHub Actions também executa esses testes. Os logs ficam em `build/virt/` e `build/virt-selftest/`.
+Student implementation by **Emilly Raiane Rodrigues**, based on the course framework. Original French API names and historical process messages are retained. Documentation, new examples and test diagnostics are in English.
 
-## Código
-
-- `src/console.c` e `src/font.c`: interface gráfica e caracteres.
-- `src/time.c` e `src/traitant.S`: temporizador e interrupções.
-- `src/processus.c` e `src/ctxt.S`: processos e troca de contexto.
-- `src/test_student.c`: demonstração e testes.
-- `src/crt0.S` e `src/kernel.lds`: boot e disposição da memória.
-
-O projeto usa um hart, com tarefas em modo máquina compartilhando memória. Os nomes franceses das funções foram mantidos.
-
-## Créditos
-
-Implementação estudantil de **Emilly Raiane Rodrigues**, sobre a estrutura da disciplina. A base é a versão final de dezembro de 2023, com correções de execução e compatibilidade.
-
-O código de apoio inclui componentes Flux/OSKit, CMU/Mach, klibc e uma fonte bitmap com créditos a Daniel Hepper, Marcel Sondaar e IBM. Os avisos originais permanecem nos fontes; `COPYING.GPL-2` acompanha os componentes que citam essa licença.
+Support code includes Flux/OSKit, CMU/Mach, klibc and bitmap-font credits to Daniel Hepper, Marcel Sondaar and IBM. Original notices remain in the source; [COPYING.GPL-2](COPYING.GPL-2) accompanies the components referring to it.

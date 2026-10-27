@@ -1,4 +1,5 @@
 #include "test_student.h"
+#include "demos.h"
 #include "cpu.h"
 #include "uart.h"
 #include "console.h"
@@ -10,11 +11,15 @@ void kernel_start(void)
     init_uart();
     efface_ecran();
 #ifdef PLATFORM_CEP
-    printf("OS / RISC-V RV64 / plataforma CEP\n");
+    printf("OS / RISC-V RV64 / QEMU CEP\n");
 #else
     printf("OS / RISC-V RV64 / QEMU virt\n");
 #endif
-    printf("Timer: 20 Hz | processos: idle + 3 | modo: M\n");
+#if defined(KERNEL_SELFTEST) || defined(DEMO_PROCESSES)
+    printf("Timer: 20 Hz | processes: idle + 3 | mode: M\n");
     test_processus();
+#else
+    demo_run();
+#endif
     for (;;) hlt();
 }

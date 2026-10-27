@@ -121,7 +121,7 @@ void idle(void)
             }
             printf("SELFTEST: EXIT PASS\nSELFTEST: ALL PASS\n");
 #else
-            printf("[OS] DEMO COMPLETE: proc1, proc2, proc3 termines; idle actif.\n");
+            printf("[OS] DEMO COMPLETE: proc1, proc2, proc3 finished; idle running.\n");
 #endif
             annonce = 1;
         }
