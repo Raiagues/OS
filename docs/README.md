@@ -1,5 +1,7 @@
 # Project guide
 
+[Read online with screenshots and interactive diagrams](https://raiagues.github.io/OS/).
+
 Follow a character from `printf` to a pixel, or a timer interrupt from the CPU to a process switch. The examples call the kernel's existing functions directly.
 
 | Chapter | What to look for |
@@ -12,6 +14,7 @@ Follow a character from `printf` to a pixel, or a timer interrupt from the CPU t
 | [6. Clock and interrupts](06-clock-interrupts.md) | CLINT, CSRs, timer ticks and traps |
 | [7. Processes](07-processes.md) | Creation, context, scheduling, sleep and termination |
 | [8. Run and verify](08-run-and-verify.md) | Installation, commands, tests and captures |
+| [9. Development history](09-development.md) | How the original kernel was built, and what was changed during recovery |
 
 For a first run, start with chapter 8, then read the implementation chapters in order. The diagrams explain control flow; the linked screenshots and logs come from actual QEMU executions.
 

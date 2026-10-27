@@ -133,12 +133,21 @@ def run_capture(args, mode, targets):
                     image = args.output / filename
                     raw = qmp.capture(image, temporary)
                     if mode == 'pixels':
-                        expected = {'pixel-red.png': 0x00ff0000, 'pixel-green.png': 0x0000ff00,
-                                    'pixel-blue.png': 0x000000ff, 'pixels.png': 0xffffffff}[filename]
-                        # A's first bitmap row has bit 2 set; its text row is 3.
-                        actual = struct.unpack_from('<I', raw, (24 * WIDTH + 2) * 4)[0]
-                        if actual != expected:
-                            raise RuntimeError(f'{filename}: expected pixel {expected:#x}, got {actual:#x}')
+                        # ASCII A is column 33; its first bitmap row has bit 2 set.
+                        for row, color in enumerate((0xff0000, 0x00ff00, 0x0000ff, 0xffffffff), 1):
+                            actual = struct.unpack_from('<I', raw, (row * 8 * WIDTH + 33 * 8 + 2) * 4)[0]
+                            if actual != color:
+                                raise RuntimeError(f'ASCII row {row}: expected {color:#x}, got {actual:#x}')
+                        paragraph = text.split('\f', 1)[1].split('\nEVIDENCE: PIXELS PASS', 1)[0]
+                        if len(paragraph) < 1600 or '\n' in paragraph or '\r' in paragraph:
+                            raise RuntimeError('Expected one long paragraph without newline bytes')
+                        rows, column = divmod(len(paragraph), 160)
+                        cursor = ((6 + rows) * 8 + 7) * WIDTH + column * 8
+                        if raw[cursor * 4:(cursor + 8) * 4] != b'\xff' * 32:
+                            raise RuntimeError('Cursor did not reach the expected position after wrapping')
+                        time.sleep(1)
+                        if qmp.capture(temporary / 'steady.png', temporary) != raw:
+                            raise RuntimeError('The static example changed after one second')
                     captures.append({'file': filename, 'trigger': marker.strip(),
                                      'settle_seconds': settle, 'sha256': digest(image)})
             finally:
@@ -199,10 +208,7 @@ def main():
     if not re.search(r'^cep\s', machines, re.M):
         parser.error('This capture needs the course QEMU with machine cep.')
     scenarios = [
-        ('pixels', [('EVIDENCE: PIXELS COLOR=red\n', 'pixel-red.png', 0),
-                    ('EVIDENCE: PIXELS COLOR=green\n', 'pixel-green.png', 0),
-                    ('EVIDENCE: PIXELS COLOR=blue\n', 'pixel-blue.png', 0),
-                    ('EVIDENCE: PIXELS PASS\n', 'pixels.png', 0)]),
+        ('pixels', [('EVIDENCE: PIXELS PASS\n', 'pixels.png', 0)]),
         ('console', [('EVIDENCE: CONSOLE PASS\n', 'console.png', 0)]),
         ('scroll', [('EVIDENCE: SCROLL PASS written=100 first_visible=12 last_visible=99\n', 'scroll.png', 0)]),
         ('uart', [('EVIDENCE: UART PASS direct_tx=1 console_mirror=1\n', 'uart.png', 0)]),

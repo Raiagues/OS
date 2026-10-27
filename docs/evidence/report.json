@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-27T13:11:01.851739+00:00",
+  "generated_utc": "2026-10-27T13:26:28.970825+00:00",
   "status": "PASS",
   "platform": "cep",
   "display_backend": "none",
@@ -17,7 +17,7 @@
     "src/crt0.S": "c5cfaff51509427012c152491cc2f6aebecf9d35c0258b7667d669bdbc9dd54b",
     "src/ctxt.S": "5eb6cb6733580d718fd18f857d4a6440f5d1b10ea599e2d7662e5b9a7aeb6231",
     "src/ctype.h": "3aece136fae5f1de6a28a973b0993920c63360c7633a442ba5a5ee72d7784f3e",
-    "src/demos.c": "fbba92fceb3d74db4a15717724aa63ff61b65364af15ff80dc1dd09f1e86ada2",
+    "src/demos.c": "b13fa167b8bf72cd1ed5a751423d0b6c7fa299e17591dd9a01b6454db61ef633",
     "src/demos.h": "337da4d7c1ba72b8c6f34a22c7836caddca86d68e590c3bb3b3be5b973be6e08",
     "src/div64.h": "6a628aa1573ad7558e43f5d9c16676cf6b80ffbbe6de2720380703bbd23c4bec",
     "src/doprnt.c": "92b3baa16da9b82a747c263ee8fe9aaec7fc62800f15f88d60f248e30020bbce",
@@ -52,40 +52,22 @@
     {
       "mode": "pixels",
       "make": "make PLATFORM=cep DEMO=pixels SELFTEST=0 all",
-      "kernel_sha256": "02ff81fae770db8a77f8c3f1578d7ec01ba9aa548af7760e77dd95249fd14582",
+      "kernel_sha256": "6f2dbe8bc60fa78bd3c186fec41e45c311759bd391bff44872159c54779e13b2",
       "uart_log": "pixels.txt",
-      "uart_sha256": "e03ab7e600339d8bd8804943aeb5d0b7f279518a0a395dc90211dcca1ba22aa5",
+      "uart_sha256": "f8c58d525aa8b525cc26607444f38a2d11d8c99515dae33074aecbb4a2798a81",
       "captures": [
-        {
-          "file": "pixel-red.png",
-          "trigger": "EVIDENCE: PIXELS COLOR=red",
-          "settle_seconds": 0,
-          "sha256": "d822615725f3098c07e1b963fa8775bae588d249b946b8df24289b05e76a318c"
-        },
-        {
-          "file": "pixel-green.png",
-          "trigger": "EVIDENCE: PIXELS COLOR=green",
-          "settle_seconds": 0,
-          "sha256": "4179da4df36aebfb33140d4d453a5a2c667c6770def391a8510e7b354654282f"
-        },
-        {
-          "file": "pixel-blue.png",
-          "trigger": "EVIDENCE: PIXELS COLOR=blue",
-          "settle_seconds": 0,
-          "sha256": "e2a39092aa00542c0e3e87a7bd7d5c0e0bb35de3db9310179532355368a9649b"
-        },
         {
           "file": "pixels.png",
           "trigger": "EVIDENCE: PIXELS PASS",
           "settle_seconds": 0,
-          "sha256": "2da35fde47e4315bd7949671ce59b3cb780a1168b6cee6ca5b19b85404935b1f"
+          "sha256": "774a726fe13a79bb007ccd309374410b155ed1fff77ab9d3e2417e45c4a53559"
         }
       ]
     },
     {
       "mode": "console",
       "make": "make PLATFORM=cep DEMO=console SELFTEST=0 all",
-      "kernel_sha256": "d0faa221c79231aa35ff1b40d2c6a0bbd252c038c9c6ccaba43ede96c6519c5e",
+      "kernel_sha256": "a576a2d7afd31155c6af432fa76a7dce378cc2d57a7830f23c75adcbaf347f85",
       "uart_log": "console.txt",
       "uart_sha256": "3130f8758a385a715cf3b28a2a1ac9e06f2e31a0c7f9170588e36e4b2b62ae7f",
       "captures": [
@@ -100,7 +82,7 @@
     {
       "mode": "scroll",
       "make": "make PLATFORM=cep DEMO=scroll SELFTEST=0 all",
-      "kernel_sha256": "9e52ecc17a549a45cc76d00f83488fe6688f2e95e460a686f8c1d478a69458c7",
+      "kernel_sha256": "8ce605ddc1950cc43613a172d45b48bfeca92fd8b7f7ca97b90639d8fbdb6c6e",
       "uart_log": "scroll.txt",
       "uart_sha256": "5b89f8495d4e25283ad1fe2a0174e6b533e288d5408fccfae681fea51f937a06",
       "captures": [
@@ -115,7 +97,7 @@
     {
       "mode": "uart",
       "make": "make PLATFORM=cep DEMO=uart SELFTEST=0 all",
-      "kernel_sha256": "431b247a8f7ea944b53ebf1ef58eeb334f6d266f1891d1be94574c48cf767dcd",
+      "kernel_sha256": "d46e6b264b1377e7a4edab9e01489fe22efaaf462f57fe200b1861a663570ea2",
       "uart_log": "uart.txt",
       "uart_sha256": "98fa3cb13a22c856c6928932896c6b36710d66d1e7a8143199d7ca9037ddc129",
       "captures": [
@@ -130,7 +112,7 @@
     {
       "mode": "clock",
       "make": "make PLATFORM=cep DEMO=clock SELFTEST=0 all",
-      "kernel_sha256": "9a8a838c5da438a1f0f6f3b4d2cdbac680ba8465bbcd03996b8d7a52d962d0f0",
+      "kernel_sha256": "035c3a10dc12777473e4f9acc2c0c3676d8fa86059831bc422691840b71b88fb",
       "uart_log": "clock.txt",
       "uart_sha256": "e57bca0c83be1b9bdc5e36ba4701fdd3cc51d323e011f95e18a0f1c386b75803",
       "captures": [
@@ -165,5 +147,5 @@
     }
   ],
   "integration_test": "make DEMO=processes test: passed",
-  "selftest_sha256": "615772cada7b3e4751d7920ad16caa1075af56be8bf9bcc7478df11b0644cf10"
+  "selftest_sha256": "a3376735d5cae7c03dba253932bf20f10fedb63e5ff1a81cae561058bc34a693"
 }

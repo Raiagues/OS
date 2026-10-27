@@ -4,6 +4,8 @@ A small operating system written in C and RISC-V assembly for the PCSEF / SEOC c
 
 The original **QEMU CEP graphical console** has a 1280 × 720 framebuffer, an 8 × 8 font, a clock and a process-state display. The kernel also implements UART output, timer interrupts, round-robin scheduling, sleep and process termination.
 
+[Tutorials, QEMU captures and interactive diagrams](https://raiagues.github.io/OS/)
+
 ## Run
 
 With the course tools installed:
@@ -21,7 +23,7 @@ For a fresh setup, see **[Run and verify](docs/08-run-and-verify.md)**. It cover
 These examples use the kernel's existing functions, with ordinary text and pixels:
 
 ```sh
-./run.sh DEMO=pixels    # Alphabet and digits, cycling through colors
+./run.sh DEMO=pixels    # Four colored ASCII rows and a long wrapping paragraph
 ./run.sh DEMO=console   # Newline, tab, backspace, carriage return and clear
 ./run.sh DEMO=scroll    # Write more lines than fit on screen
 ./run.sh DEMO=uart      # Direct UART output and console output

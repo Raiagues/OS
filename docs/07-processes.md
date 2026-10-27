@@ -120,10 +120,10 @@ sequenceDiagram
     participant S as ordonnance / ctx_sw
     participant P2 as proc2 and its stack
     P1->>S: Timer interrupt or voluntary call
-    S->>S: Save proc1; restore proc2
+    S->>S: Save proc1 and restore proc2
     S->>P2: Return on proc2's stack
     P2->>S: Later scheduling opportunity
-    S->>S: Save proc2; restore proc1
+    S->>S: Save proc2 and restore proc1
     S->>P1: Resume the suspended call
 ```
 

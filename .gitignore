@@ -11,3 +11,4 @@
 __pycache__/
 .gdb_history
 .DS_Store
+/site/node_modules/

@@ -8,9 +8,11 @@ Implementation: [console.c](../src/console.c), [console.h](../src/console.h) and
 ./run.sh DEMO=pixels
 ```
 
-The example draws `A–Z`, `a–z` and `0–9` at the normal 8 × 8 character size. It repeats the same text in red, green, blue and white. The color changes once per second; there are no enlarged labels or additional interface components.
+Rows 1–4 each show all 95 printable ASCII characters, from space (32) through `~` (126), including punctuation. The rows are red, green, blue and white, using the normal 8 × 8 font. The screen stays static.
 
-Actual framebuffer captures: [red](evidence/pixel-red.png), [green](evidence/pixel-green.png), [blue](evidence/pixel-blue.png), [white](evidence/pixels.png). The [UART log](evidence/pixels.txt) records the color changes.
+A paragraph longer than 1,000 characters follows the colored rows. It passes through the original `console_putbytes` as one string without newline bytes. The console automatically starts a new row after 160 characters; it wraps by character, so a word can cross the right edge.
+
+Compare the [framebuffer capture](evidence/pixels.png) with the [UART log](evidence/pixels.txt). The long paragraph wraps on screen even though the string contains no explicit line breaks.
 
 ## From coordinates to an address
 

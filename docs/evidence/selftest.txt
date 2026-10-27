@@ -15,4 +15,4 @@ SELFTEST: PREEMPT PASS
 Fin du processus 1
 SELFTEST: EXIT PASS
 SELFTEST: ALL PASS
-qemu-system-riscv64: terminating on signal 15 from pid 710658 (python3)
+qemu-system-riscv64: terminating on signal 15 from pid 716571 (python3)

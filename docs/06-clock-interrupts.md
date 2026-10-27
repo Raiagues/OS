@@ -64,7 +64,7 @@ sequenceDiagram
     participant C as trap_handler
     participant S as ordonnance
     H->>H: mtime reaches mtimecmp
-    H->>A: Save mepc and mcause; enter mtvec
+    H->>A: Save mepc and mcause, then enter mtvec
     A->>A: Save 16 registers on the stack
     A->>C: Call C handler
     C->>C: Check cause, rearm timer, increment ticks
@@ -72,7 +72,7 @@ sequenceDiagram
     C->>S: Schedule a task
     S-->>C: Return when this task resumes
     C-->>A: Return from C
-    A->>T: Restore registers; mret
+    A->>T: Restore registers and execute mret
 ```
 
 [traitant.S](../src/traitant.S) saves `ra`, `a0..a7` and `t0..t6`: 16 eight-byte registers, or **128 bytes**. These values must survive an asynchronous interruption even though C functions may overwrite them.

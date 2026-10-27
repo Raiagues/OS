@@ -79,7 +79,7 @@ Exit with **Ctrl+A**, then **X**. This recompiles for the `virt` memory map and 
 | Local command | Expected result | Recorded output |
 | --- | --- | --- |
 | `./run.sh` | Three tasks sleep and terminate; `idle` continues | [Start](evidence/processes-start.png), [end](evidence/processes-end.png), [log](evidence/processes.txt) |
-| `./run.sh DEMO=pixels` | Normal-size alphabet and digits, cycling colors | [Red](evidence/pixel-red.png), [white](evidence/pixels.png), [log](evidence/pixels.txt) |
+| `./run.sh DEMO=pixels` | Four colored rows of printable ASCII, then a long paragraph wrapping at 160 columns; static screen | [Screen](evidence/pixels.png), [log](evidence/pixels.txt) |
 | `./run.sh DEMO=console` | Short control-character examples | [Screen](evidence/console.png), [log](evidence/console.txt) |
 | `./run.sh DEMO=scroll` | 100 lines written; oldest lines scroll away | [Screen](evidence/scroll.png), [log](evidence/scroll.txt) |
 | `./run.sh DEMO=uart` | Direct serial output versus mirrored console output | [Screen](evidence/uart.png), [log](evidence/uart.txt) |
