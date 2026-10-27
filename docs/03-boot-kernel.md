@@ -23,7 +23,7 @@ flowchart LR
 
 **ELF** stores code, data, load addresses and symbols. Symbols let GDB identify functions such as `kernel_start`.
 
-Expect `ELF64`, little-endian data, machine `RISC-V`, and entry point **`0x1000`**. The program headers contain three `LOAD` segments, with `R E`, `R` and `RW` permissions. Sizes vary with compiler and demo selection. See the [recorded ELF headers](evidence/elf.txt).
+Expect `ELF64`, little-endian data, machine `RISC-V`, and entry point **`0x1000`**. The program headers contain three `LOAD` segments, with `R E`, `R` and `RW` permissions. Sizes vary with the compiler and the project being built. See the [recorded ELF headers](evidence/elf.txt).
 
 | Section | Contents |
 | --- | --- |
@@ -47,7 +47,7 @@ Read [crt0.S](../src/crt0.S) in this order:
 | Set the global pointer | `la gp, __global_pointer$` | Prepare global-data addressing |
 | Set the stack pointer | `la sp, stacks_end` | Start at the top of the boot stack |
 | Clear `.bss` | Loop from `__bss_start` to `__bss_end` | Store zeros eight bytes at a time |
-| Enter C | `call kernel_start` | Initialize devices and run the demo |
+| Enter C | `call kernel_start` | Initialize devices and run the kernel |
 
 The boot stack reserves **16 KiB**, grows toward lower addresses, and is aligned to 16 bytes as required by the calling convention. It lies in `.bss`, but the clearing loop runs before any C call uses it. See the [RISC-V calling convention](https://riscv-non-isa.github.io/riscv-elf-psabi-doc/).
 
@@ -55,7 +55,7 @@ The `gp` initialization uses `.option norelax`: this prevents an optimization th
 
 ## 3. Initialize devices and tasks
 
-[kernel_start](../src/start.c) initializes UART, clears the screen and selects the compiled demo. For the default process demo, [test_processus](../src/test_student.c) then:
+[kernel_start](../src/main.c) in the complete kernel initializes UART and clears the screen. That same function directly:
 
 1. Calls `init_proc()` to prepare the task table and `idle`.
 2. Installs `mon_traitant` in `mtvec`.
@@ -65,11 +65,22 @@ The `gp` initialization uses `.option norelax`: this prevents an optimization th
 
 The table must be ready before interrupts can invoke the scheduler. Calling `init_proc` again would erase the tasks already created.
 
+[main.c](../src/main.c) also contains `proc1`, `proc2`, `proc3` and `idle`, so the startup sequence and the functions it launches can be read together. There is no example selector in this executable.
+
 Everything runs in **machine mode**, or M-mode, including the three task functions. There is no transition to an isolated user program.
+
+For a smaller first step, open the independent [pixels project's main.c](../examples/01-pixels/src/main.c). Its `kernel_start()` initializes the console, draws characters and waits; it does not create tasks or enable a scheduler. That folder has its own boot code, linker script, headers and Makefile. Build it separately:
+
+```bash
+cd examples/01-pixels
+sh scripts/course-env.sh make
+```
+
+Its ELF is `examples/01-pixels/build/cep/kernel.elf` relative to the repository root. The remaining GDB steps below inspect the complete kernel at the root, not that separate executable.
 
 ## 4. Follow the boot in GDB
 
-In terminal 1:
+In terminal 1, from the repository root:
 
 ```bash
 sh scripts/course-env.sh make debug

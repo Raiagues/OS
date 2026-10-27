@@ -1,0 +1,5 @@
+UART TX example
+UART_ONLY: sent directly to UART.
+CONSOLE_MIRROR: screen and UART.
+The UART_ONLY line is not drawn here.
+EVIDENCE: UART PASS direct_tx=1 console_mirror=1

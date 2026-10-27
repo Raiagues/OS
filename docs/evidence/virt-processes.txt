@@ -26,4 +26,4 @@ Fin du processus 2
 Fin du sommeil de 4 s du processus 3
 Fin du processus 3
 [OS] DEMO COMPLETE: proc1, proc2, proc3 finished; idle running.
-qemu-system-riscv64: terminating on signal 15 from pid 738146 (python3)
+qemu-system-riscv64: terminating on signal 15 from pid 750088 (python3)

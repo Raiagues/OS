@@ -1,6 +1,8 @@
 # 8. Run and verify
 
-Run commands from the repository root. Choose **CEP** for the graphical window or **`virt`** for a terminal-only run with standard QEMU. The Docker launcher includes the compiler and custom QEMU build needed by CEP.
+The repository root contains the complete kernel. Six numbered folders under `examples/` are independent projects, each with its own sources, build files and launchers. Start the setup commands at the repository root; enter an example folder when running that example.
+
+Use **CEP** for the graphical window or **`virt`** for a terminal-only run of the complete kernel with standard QEMU. The Docker launcher includes the compiler and custom QEMU build needed by CEP.
 
 ## Get the source
 
@@ -28,15 +30,14 @@ The script downloads a pinned toolchain image if necessary. It contains Debian 1
 
 Xephyr gives the container its own graphical window and temporary display credential. The container does not receive the main desktop credential. Builds go into `build/container/`; closing the window or pressing Ctrl+C stops the temporary container.
 
-Select an example by name:
+The command above runs the complete kernel. To run a small project, enter its folder and use that folder’s launcher:
 
 ```sh
-./scripts/run-container.sh pixels
-./scripts/run-container.sh console
-./scripts/run-container.sh scroll
-./scripts/run-container.sh uart
-./scripts/run-container.sh clock
+cd examples/02-console
+./scripts/run-container.sh
 ```
+
+Each launcher takes no example argument and runs the project in its own folder. The [example list below](#what-to-run-and-observe) identifies all six folders.
 
 The launcher was tested on Linux/amd64. Windows and macOS were not tested. Xephyr needs free space in `/tmp` for its keyboard cache.
 
@@ -51,7 +52,7 @@ make PLATFORM=virt check
 make PLATFORM=virt run
 ```
 
-Exit with **Ctrl+A**, then **X**. This recompiles for the `virt` memory map and UART. It does not implement the CEP graphical console. The pixel, console and scrolling examples require CEP.
+Exit with **Ctrl+A**, then **X**. This recompiles for the `virt` memory map and UART. It does not implement the CEP graphical console. The six numbered graphical examples target CEP.
 
 ## Local CEP toolchain
 
@@ -73,22 +74,31 @@ Replace `/opt/cep` with the directory containing `bin/riscv64-unknown-elf-gcc` a
 
 The wrapper selects `rv64ima` for GCC 11, keeps temporary files in `build/tmp` unless `TMPDIR` is set, and prepares local `libaio` compatibility when needed on Ubuntu 24.04 x86-64.
 
-Close the QEMU window to stop. The process example finishes after roughly eight kernel seconds, but `idle` and the clock keep running.
+Close the QEMU window to stop. In the complete kernel, the three tasks finish after roughly eight kernel seconds, while `idle` and the clock keep running. The same setup also works inside each numbered example folder: its local `run.sh` finds the tools and builds that project.
 
 ## What to run and observe
 
-The commands below use local CEP tools. With Docker, use `./scripts/run-container.sh pixels`, `console`, `scroll`, `uart` or `clock`; omit the name for the process demo.
+At the repository root, `./run.sh` (local tools) or `./scripts/run-container.sh` (Docker) runs the complete kernel.
 
-| Local command | Expected result | Recorded output |
+Each numbered folder is a complete, separate project. To use local CEP tools, start from the repository root and run:
+
+```sh
+cd examples/02-console
+./run.sh
+```
+
+With Docker, run `./scripts/run-container.sh` from the same folder. Open its `src/main.c` to read the example from `kernel_start` onward. Each example contains its own drivers, runtime, headers, boot assembly and linker script; copying one folder is enough to take its source with you.
+
+| Project folder | Expected result | Recorded output |
 | --- | --- | --- |
-| `./run.sh` | Three tasks sleep and terminate; `idle` continues | [Start](evidence/processes-start.png), [end](evidence/processes-end.png), [log](evidence/processes.txt) |
-| `./run.sh DEMO=pixels` | Four colored rows of printable ASCII, then a long paragraph wrapping at 160 columns; static screen | [Screen](evidence/pixels.png), [log](evidence/pixels.txt) |
-| `./run.sh DEMO=console` | Short control-character examples | [Screen](evidence/console.png), [log](evidence/console.txt) |
-| `./run.sh DEMO=scroll` | 100 lines written; oldest lines scroll away | [Screen](evidence/scroll.png), [log](evidence/scroll.txt) |
-| `./run.sh DEMO=uart` | Direct serial output versus mirrored console output | [Screen](evidence/uart.png), [log](evidence/uart.txt) |
-| `./run.sh DEMO=clock` | Clock advances with `idle` only | [Screen](evidence/clock.png), [log](evidence/clock.txt) |
+| [01-pixels](../examples/01-pixels/README.md) | Four static rows of printable ASCII in different colors, then a paragraph wrapping at 160 columns | [Screen](evidence/pixels.png), [log](evidence/pixels.txt) |
+| [02-console](../examples/02-console/README.md) | Short control-character examples | [Screen](evidence/console.png), [log](evidence/console.txt) |
+| [03-scroll](../examples/03-scroll/README.md) | 100 lines written; oldest lines scroll away | [Screen](evidence/scroll.png), [log](evidence/scroll.txt) |
+| [04-uart](../examples/04-uart/README.md) | Direct serial output versus mirrored console output | [Screen](evidence/uart.png), [log](evidence/uart.txt) |
+| [05-clock](../examples/05-clock/README.md) | Timer interrupts and a clock without a scheduler | [Screen](evidence/clock.png), [log](evidence/clock.txt) |
+| [06-processes](../examples/06-processes/README.md) | Three tasks sleep and terminate; `idle` continues | [Start](evidence/processes-start.png), [end](evidence/processes-end.png), [log](evidence/processes.txt) |
 
-`DEMO` is a build option, not a command typed inside the kernel. Executables have separate directories, such as `build/cep-pixels/kernel.elf`. Static examples remain open until you close QEMU.
+For example, building `examples/02-console` creates `examples/02-console/build/cep/kernel.elf`. Its captured image, UART log and report are in its own `evidence/` directory. Static examples remain visible until QEMU closes.
 
 ## Optional debugger
 
@@ -98,7 +108,7 @@ The boot, timer and process chapters use GDB to inspect registers and memory. In
 sudo apt-get install -y gdb-multiarch
 ```
 
-Those examples use the local CEP toolchain and `make debug`, which starts QEMU paused and listens on port 1234.
+The debugger commands in those chapters operate on the complete kernel at the repository root. With the local CEP toolchain, `make debug` starts QEMU paused and listens on port 1234.
 
 ## Integration tests
 
@@ -108,7 +118,7 @@ With the local CEP toolchain:
 sh scripts/course-env.sh make test
 ```
 
-With standard packages, use `make test` directly. It runs two `virt` kernels: the normal process example and the self-test. [test_qemu.py](../scripts/test_qemu.py) checks ELF headers, output and timeouts. Logs are saved under `build/virt/` and `build/virt-selftest/`.
+With standard packages, use `make test` directly from the repository root. It runs two `virt` kernels: the complete kernel and the independent [kernel test project](../tests/kernel/Makefile). [test_qemu.py](../scripts/test_qemu.py) checks ELF headers, output and timeouts. The complete kernel’s ELF and log are under `build/virt/`; the self-test’s ELF and log are under `tests/kernel/build/virt/`.
 
 The self-test checks formatting bounds, sleep, termination and preemption. For preemption, one task busy-loops without voluntarily yielding; another task must still run. Look for `SELFTEST: ALL PASS`. [Recorded self-test log](evidence/selftest.txt).
 
@@ -136,13 +146,20 @@ docker run --rm --platform linux/amd64 --ulimit core=0 \
   '
 ```
 
-The script pauses QEMU through QMP, reads the actual 3,686,400 framebuffer bytes at `0x80000000`, converts them to PNG, then resumes. It saves images, UART logs and `report.json` in `build/evidence/`, and runs the integration tests afterward.
+The script builds each numbered project in its own folder. It pauses QEMU through QMP, reads the actual 3,686,400 framebuffer bytes at `0x80000000`, converts them to PNG, then resumes. By default, images, UART logs and `report.json` go only into `build/evidence/`. The integration tests run afterward.
 
 The report records versions, source hashes, ELF hashes, capture triggers and output hashes. Images may differ in timing; ELF hashes may differ with compiler versions or debug paths. The tests check behavior rather than requiring a binary-identical build.
 
-To update the committed samples after a code change, run the capture with `--output docs/evidence`. ELF and GDB records are produced separately using the commands in the [boot](03-boot-kernel.md), [clock](06-clock-interrupts.md) and [process](07-processes.md) chapters.
+To refresh the documentation captures and each example’s own `evidence/` folder after a code change, run from the repository root:
 
-Screenshots show the display at particular moments. UART logs show transmitted bytes. The integration test checks preemption, sleep and exit. These are different observations: a screenshot alone cannot prove scheduling correctness or precise timing. Each small example calls the corresponding kernel functions directly.
+```sh
+sh scripts/course-env.sh python3 scripts/capture_evidence.py \
+  --output docs/evidence --update-examples
+```
+
+ELF and GDB records are produced separately using the commands in the [boot](03-boot-kernel.md), [clock](06-clock-interrupts.md) and [process](07-processes.md) chapters.
+
+Screenshots show the display at particular moments. UART logs show transmitted bytes. The integration test checks preemption, sleep and exit. These are different observations: a screenshot alone cannot prove scheduling correctness or precise timing. Each small project runs its own local implementation, which can be inspected from `src/main.c` through its drivers.
 
 ## Troubleshooting
 

@@ -1,4 +1,3 @@
-OS / RISC-V RV64 / QEMU CEP
 UART TX example
 UART_ONLY: sent directly to UART.
 CONSOLE_MIRROR: screen and UART.

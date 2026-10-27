@@ -11,6 +11,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import socket
 import struct
 import subprocess
@@ -21,6 +22,8 @@ import zlib
 ROOT = Path(__file__).resolve().parents[1]
 WIDTH, HEIGHT = 1280, 720
 FRAMEBUFFER = 0x80000000
+EXAMPLES = {name: f'examples/{i:02d}-{name}'
+            for i, name in enumerate(('pixels', 'console', 'scroll', 'uart', 'clock', 'processes'), 1)}
 
 
 def digest(path):
@@ -89,9 +92,9 @@ class QMP:
 
 
 def run_capture(args, mode, targets):
-    build = ROOT / 'build' / ('cep' if mode == 'processes' else f'cep-{mode}')
-    kernel = build / 'kernel.elf'
-    command = ['make', 'PLATFORM=cep', f'DEMO={mode}', 'SELFTEST=0', 'all']
+    project = ROOT / EXAMPLES[mode]
+    kernel = project / 'build/cep/kernel.elf'
+    command = ['make', '-C', str(project), 'PLATFORM=cep', 'all']
     result = subprocess.run(command, cwd=ROOT, text=True, stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT, timeout=120)
     if result.returncode:
@@ -181,9 +184,14 @@ def run_capture(args, mode, targets):
             check_demo(text.replace('QEMU CEP', 'QEMU virt'))
         log.write_text(text)
     print(f'PASS {mode}: {", ".join(x["file"] for x in captures)}', flush=True)
-    return {'mode': mode, 'make': ' '.join(command),
-            'kernel_sha256': digest(kernel), 'uart_log': log.name,
-            'uart_sha256': digest(log), 'captures': captures}
+    result = {'mode': mode, 'project': EXAMPLES[mode],
+              'make': f'make -C {EXAMPLES[mode]} PLATFORM=cep',
+              'sources_sha256': {str(p.relative_to(project)): digest(p)
+                                 for p in sorted((project / 'src').iterdir()) if p.is_file()},
+              'makefile_sha256': digest(project / 'Makefile'),
+              'kernel_sha256': digest(kernel), 'uart_log': log.name,
+              'uart_sha256': digest(log), 'captures': captures}
+    return result
 
 
 def version(command):
@@ -193,6 +201,8 @@ def version(command):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output', type=Path, default=ROOT / 'build/evidence')
+    parser.add_argument('--update-examples', action='store_true',
+                        help="also save each example's captures, log and report inside its evidence folder")
     parser.add_argument('--qemu', default=os.environ.get('QEMU', 'qemu-system-riscv64'))
     parser.add_argument('--timeout', type=float, default=30)
     parser.add_argument('--display', choices=['none', 'sdl'], default='none',
@@ -218,12 +228,12 @@ def main():
                         'processes-end.png', 1.1)]),
     ]
     results = [run_capture(args, mode, targets) for mode, targets in scenarios]
-    result = subprocess.run(['make', f'QEMU={args.qemu}', 'DEMO=processes', 'test'], cwd=ROOT,
+    result = subprocess.run(['make', f'QEMU={args.qemu}', 'test'], cwd=ROOT,
                             text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=150)
     if result.returncode:
         raise RuntimeError(result.stdout)
     for original, name in [('build/virt/qemu-demo.log', 'virt-processes.txt'),
-                           ('build/virt-selftest/qemu-selftest.log', 'selftest.txt')]:
+                           ('tests/kernel/build/virt/qemu-selftest.log', 'selftest.txt')]:
         (args.output / name).write_bytes((ROOT / original).read_bytes())
     report = {'generated_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
               'status': 'PASS', 'platform': 'cep', 'display_backend': args.display,
@@ -234,9 +244,19 @@ def main():
               'sources_sha256': {str(p.relative_to(ROOT)): digest(p)
                                  for p in sorted((ROOT / 'src').iterdir()) if p.is_file()},
               'scenarios': results,
-              'integration_test': 'make DEMO=processes test: passed',
+              'integration_test': 'make test: passed',
               'selftest_sha256': digest(args.output / 'selftest.txt')}
     report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n')
+    if args.update_examples:
+        for result in results:
+            destination = ROOT / result['project'] / 'evidence'
+            destination.mkdir(parents=True, exist_ok=True)
+            for name in [result['uart_log'], *(item['file'] for item in result['captures'])]:
+                shutil.copy2(args.output / name, destination / name)
+            sample = {key: report[key] for key in ('generated_utc', 'status', 'platform',
+                       'capture_method', 'qemu', 'compiler', 'architecture')}
+            sample.update(result)
+            (destination / 'report.json').write_text(json.dumps(sample, indent=2) + '\n')
     print(f'PASS all captures and integration tests. Report: {report_path}')
 
 

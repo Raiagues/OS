@@ -2,7 +2,25 @@
 
 [Read online with screenshots and interactive diagrams](https://raiagues.github.io/OS/).
 
-Follow a character from `printf` to a pixel, or a timer interrupt from the CPU to a process switch. Learn how the kernel fits together, run its examples, and build each mechanism step by step.
+Learn by running six small projects in order. Each folder is self-contained: it has its own `src/main.c`, sources, Makefile, launchers and captured output. Begin with its README, then follow the code from `kernel_start`.
+
+| Start here | Mechanism |
+| --- | --- |
+| [01 — Pixels](../examples/01-pixels/README.md) | Font bits, colors and paragraph wrapping |
+| [02 — Console](../examples/02-console/README.md) | Cursor movement and control characters |
+| [03 — Scrolling](../examples/03-scroll/README.md) | Moving and clearing framebuffer rows |
+| [04 — UART](../examples/04-uart/README.md) | Sending bytes directly and through the console |
+| [05 — Clock](../examples/05-clock/README.md) | Timer interrupts without a scheduler |
+| [06 — Processes](../examples/06-processes/README.md) | Task creation, context switches, sleep and exit |
+
+For example, from the repository root with local CEP tools configured:
+
+```sh
+cd examples/01-pixels
+./run.sh
+```
+
+With Docker, use `./scripts/run-container.sh` inside the same folder. [Run and verify](08-run-and-verify.md) covers installation. [Build it step by step](09-development.md) connects the six projects; the chapters below explain each mechanism in detail.
 
 | Chapter | What to look for |
 | --- | --- |
@@ -14,8 +32,8 @@ Follow a character from `printf` to a pixel, or a timer interrupt from the CPU t
 | [6. Clock and interrupts](06-clock-interrupts.md) | CLINT, CSRs, timer ticks and traps |
 | [7. Processes](07-processes.md) | Creation, context, scheduling, sleep and termination |
 | [8. Run and verify](08-run-and-verify.md) | Installation, commands, tests and captures |
-| [9. Build it step by step](09-development.md) | Implement the boot path, console, timer and scheduler in working stages |
+| [9. Build it step by step](09-development.md) | Work through the six independent projects, from pixels to processes |
 
-For a first run, start with chapter 8. Use chapter 9 as the implementation walkthrough and chapters 2–7 for the details behind each stage. The diagrams explain control flow; the linked screenshots and logs show actual QEMU executions.
+The repository root contains the complete kernel. Its [main.c](../src/main.c) defines the entry point and task functions. The separate [kernel test project](../tests/kernel/README.md) checks formatting, preemption, sleep and exit; `make test` at the repository root runs it alongside the normal kernel. Diagrams explain control flow, while screenshots and logs show actual QEMU executions.
 
 [Back to the repository](../README.md)

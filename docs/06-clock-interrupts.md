@@ -1,18 +1,23 @@
 # 6. Clock and timer interrupts
 
-The clock in the screen's corner and task scheduling share the same source: a periodic timer interrupt. It can interrupt a task even when that task never calls the scheduler voluntarily.
+Periodic timer interrupts update the clock in the screen's corner. The standalone example focuses on that path. In the complete kernel, the same interrupt also invokes the scheduler and enables task preemption.
 
 ## Run the clock on its own
 
+From the repository root:
+
 ```bash
-./run.sh DEMO=clock
+cd examples/05-clock
+./run.sh
 ```
 
-`clock_demo` in [demos.c](../src/demos.c) initializes only `idle`, installs the handler and enables the timer. Watch the clock advance and compare the [serial output](evidence/clock.txt) with the framebuffer capture:
+With Docker and the display helpers installed, use `./scripts/run-container.sh` from the same folder. The folder contains its own source, boot code, runtime and build files.
+
+Start at [src/main.c](../examples/05-clock/src/main.c). `kernel_start` initializes output, installs the handler and enables the timer. Its loop prints each new second and waits with `wfi`. **There is no process table, `idle` task or scheduler in this example.** Watch the clock advance and compare the [serial output](evidence/clock.txt) with the framebuffer capture:
 
 ![Clock running on CEP](evidence/clock.png)
 
-This small demo uses the existing timer API. The screenshot shows its visible output; GDB and the preemption test below examine the mechanism behind it.
+The screenshot shows the timer-only program. GDB inspects its interrupt state; the complete kernel's separate preemption test checks scheduling.
 
 ## Three different time scales
 
@@ -24,7 +29,7 @@ This small demo uses the existing timer API. The screenshot shows its visible ou
 
 The 10 MHz timer frequency is **not the CPU instruction frequency**. Each interrupt is scheduled 500,000 timer increments ahead: `10,000,000 / 20`, or 50 ms nominally.
 
-[programme_timer](../src/time.c) writes the next deadline:
+[programme_timer](../examples/05-clock/src/time.c) writes the next deadline:
 
 ```c
 *((volatile uint64_t *)CLINT_TIMER_CMP) =
@@ -50,59 +55,61 @@ These pointers address device registers. `volatile` requires actual accesses eve
 
 When `mtime >= mtimecmp`, the timer interrupt becomes pending. The enable bits allow the CPU to take it. Writing a future comparison removes that condition. The top bit of `mcause` distinguishes an interrupt from an exception; cause 7 identifies the machine timer. See the [RISC-V machine-mode specification](https://docs.riscv.org/reference/isa/v20260120/priv/machine.html).
 
-The memory addresses are platform constants in [cep_platform.h](../src/cep_platform.h), not variables allocated by the linker.
+The memory addresses are platform constants in [cep_platform.h](../examples/05-clock/src/cep_platform.h), not variables allocated by the linker.
 
 ## Setup and interrupt handling
 
-The boot sequence first prepares the process table, installs `mon_traitant` with `init_traitant_timer`, and creates any demonstration tasks. `enable_timer()` then programs the deadline, enables `mie.MTIE`, and enables `mstatus.MIE`. This prevents an interrupt from reaching an uninitialized scheduler.
+The standalone program installs `mon_traitant` with `init_traitant_timer`. `enable_timer()` programs the deadline, enables `mie.MTIE`, then enables `mstatus.MIE`. Each handler invocation returns to the same main loop.
 
 ```mermaid
 sequenceDiagram
-    participant T as Running task
+    participant T as Main loop
     participant H as CPU and CLINT
     participant A as mon_traitant
     participant C as trap_handler
-    participant S as ordonnance
     H->>H: mtime reaches mtimecmp
     H->>A: Save mepc and mcause, then enter mtvec
     A->>A: Save 16 registers on the stack
     A->>C: Call C handler
     C->>C: Check cause, rearm timer, increment ticks
-    C->>C: Every 20 ticks: redraw clock and states
-    C->>S: Schedule a task
-    S-->>C: Return when this task resumes
+    C->>C: Every 20 ticks: redraw clock
     C-->>A: Return from C
     A->>T: Restore registers and execute mret
 ```
 
-[traitant.S](../src/traitant.S) saves `ra`, `a0..a7` and `t0..t6`: 16 eight-byte registers, or **128 bytes**. These values must survive an asynchronous interruption even though C functions may overwrite them.
-
-If `ordonnance` switches tasks, this handler invocation remains suspended on the old task's stack. When that task is selected again, it finishes the handler and executes `mret`. [Context switching](07-processes.md) explains the additional saved state.
+[traitant.S](../examples/05-clock/src/traitant.S) saves `ra`, `a0..a7` and `t0..t6`: 16 eight-byte registers, or **128 bytes**. These values must survive an asynchronous interruption even though C functions may overwrite them.
 
 `trap_handler` accepts only the expected timer cause. Other causes print `PANIC` with `mcause`, `mepc` and `mtval`, then halt normal execution.
 
 ## From ticks to `hh:mm:ss`
 
-`handle_time_interrupt()` rearms the timer, increments `ticks`, updates the clock and task states every 20 ticks, and calls `ordonnance()` **on every tick**. Scheduling therefore has a nominal 50 ms interval while the clock display changes once per second.
+`handle_time_interrupt()` rearms the timer, increments `ticks` and updates the clock every 20 ticks.
 
-On CEP, [ecrit_car_en_haut](../src/console.c) draws eight characters at the top right, such as `00:00:03`. Hours wrap modulo 100. The `virt` port has no graphical overlay.
+On CEP, [ecrit_car_en_haut](../examples/05-clock/src/console.c) draws eight characters at the top right, such as `00:00:03`. Hours wrap modulo 100.
 
 This is a count of **handled interrupts**, rather than a direct conversion of elapsed `mtime`. Each deadline is also relative to the time when the handler rearms it. Delayed handling and periods with interrupts disabled can therefore make the displayed clock fall behind the hardware counter.
 
-`nbr_secondes()` rounds down. For example, `dors(2)` at kernel time 0.9 s schedules a wakeup at whole second 2, not necessarily 2.9 s. Sleep deadlines use this discrete clock; they do not guarantee two continuous seconds of waiting.
+## Connect the timer to the complete kernel
+
+The complete kernel's [time.c](../src/time.c) also updates the task-state panel every 20 ticks and calls `ordonnance()` **on every tick**, giving scheduling a nominal 50 ms interval. Its process table must be initialized before interrupts are enabled.
+
+If the scheduler switches tasks, the handler remains suspended on the old task's stack. When that task resumes, it finishes the handler and executes `mret`. [Context switching](07-processes.md) explains the additional saved state. The isolated example does not switch stacks.
+
+`nbr_secondes()` rounds down. In the complete kernel, `dors(2)` at kernel time 0.9 s schedules a wakeup at whole second 2, not necessarily 2.9 s. Those sleep deadlines use the discrete clock; the isolated timer example has no sleep API.
 
 ## Inspect the timer in GDB
 
-In terminal 1:
+From the repository root in terminal 1:
 
 ```bash
-sh scripts/course-env.sh make DEMO=clock debug
+cd examples/05-clock
+sh scripts/course-env.sh make debug
 ```
 
-In terminal 2:
+From the repository root in terminal 2:
 
 ```bash
-gdb-multiarch build/cep-clock/kernel.elf
+gdb-multiarch examples/05-clock/build/cep/kernel.elf
 ```
 
 At the GDB prompt:
@@ -121,6 +128,6 @@ x/gx 0x02004000
 
 Expect **`mcause = 0x8000000000000007`** and timer enable bit `mie & 0x80`. `mepc` depends on the interrupted instruction. Inside the handler, `mstatus.MIE` is cleared: trap entry saves its previous value in `MPIE` for return. This does not indicate a failed timer setup.
 
-The [recorded session](evidence/timer-gdb.txt) shows the first interrupt before rearming the comparison. GDB pauses execution, so use this inspection to understand register state, not to measure normal timing accuracy.
+The [recorded timer-register session](evidence/timer-gdb.txt) illustrates these CSR values before rearming the comparison; instruction addresses vary with the executable. GDB pauses execution, so use this inspection to understand register state, not to measure normal timing accuracy.
 
-The clock output demonstrates progression; the [busy-loop preemption test](07-processes.md#prove-preemption) demonstrates that another task can run without the active task yielding.
+The standalone clock output demonstrates progression. The complete kernel's [busy-loop preemption test](07-processes.md#prove-preemption) demonstrates that another task can run without the active task yielding.

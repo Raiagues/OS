@@ -1,7 +1,6 @@
 #include "processus.h"
 #include "time.h"
 #include "console.h"
-#include "test_student.h"
 
 processus_t table_des_processus[N];
 processus_t *actif;

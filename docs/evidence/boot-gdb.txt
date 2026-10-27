@@ -5,20 +5,20 @@ entry () at src/crt0.S:6
    0x1008 <entry+8>:	csrr	t0,mhartid
    0x100c <entry+12>:	bnez	t0,0x1048 <entry+72>
    0x1010 <entry+16>:	auipc	gp,0x3
-   0x1014 <entry+20>:	addi	gp,gp,-288
+   0x1014 <entry+20>:	addi	gp,gp,-320
    0x1018 <entry+24>:	auipc	sp,0x27
-   0x101c <entry+28>:	addi	sp,sp,600
+   0x101c <entry+28>:	addi	sp,sp,568
 pc             0x1000	0x1000 <entry>
 sp             0x0	0x0
 gp             0x0	0x0
-Breakpoint 1 at 0x2254: file src/start.c, line 11.
+Breakpoint 1 at 0x1c18: file src/cpu.h, line 19.
 
-Breakpoint 1, kernel_start () at src/start.c:11
-11	    init_uart();
-pc             0x2254	0x2254 <kernel_start+12>
-sp             0x28260	0x28260
-gp             0x3ef0	0x3ef0 <font8x8_basic+2040>
-$1 = 0x24270
-$2 = 0x28270
+Breakpoint 1, kernel_start () at src/cpu.h:19
+19	   __asm__ __volatile__("csrc mstatus, %0"::"i"(MSTATUS_MIE):"memory");
+pc             0x1c18	0x1c18 <kernel_start>
+sp             0x28250	0x28250
+gp             0x3ed0	0x3ed0 <font8x8_basic+2040>
+$1 = 0x24250
+$2 = 0x28250
 $3 = 0
 [Inferior 1 (process 1) detached]

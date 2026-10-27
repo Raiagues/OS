@@ -1,0 +1,44 @@
+{
+  "generated_utc": "2026-10-27T14:47:54.413269+00:00",
+  "status": "PASS",
+  "platform": "cep",
+  "capture_method": "Actual 1280x720 framebuffer at 0x80000000 read with QMP pmemsave; lossless PNG encoding",
+  "qemu": "QEMU emulator version 6.2.50 (v6.2.0-238-g8b39174f19-dirty)",
+  "compiler": "riscv64-unknown-elf-gcc (GCC) 11.1.0",
+  "architecture": "rv64ima",
+  "mode": "uart",
+  "project": "examples/04-uart",
+  "make": "make -C examples/04-uart PLATFORM=cep",
+  "sources_sha256": {
+    "src/cep_platform.h": "76a0f6da3b5740f016321d29d353065646d895c6142d1e5f51e23138c32c4e7e",
+    "src/console.c": "aa898bd3e0e785318a8ab4db227c56bf8e675ed378a91be7666eb25fae5df477",
+    "src/console.h": "bf6b8b522aea49e15a5e666934d2fcc940fa6f4992e46ceb13f69ef142084229",
+    "src/cpu.h": "5cc2d28a2bbe5e11ce497fbc53410bb8f2b5c8f24b1f34e03de47555f7e3cc39",
+    "src/crt0.S": "c5cfaff51509427012c152491cc2f6aebecf9d35c0258b7667d669bdbc9dd54b",
+    "src/font.c": "64c8ddec439750fcee74bbfbfd710bde4ce039dabb2eef04518d08db7ee94b6b",
+    "src/inttypes.h": "636168e19f74d13b9911f7e96d49b162fbca5e6c780513ee5bdb8f7f8fd2624e",
+    "src/kernel.lds": "66cc8e3242f97bcc072548c742afb250a576fe901b78482832cc65694ec15381",
+    "src/main.c": "feb460df8878f2e733dc6d1baeac64eeffea97527f0d9f69260a250a3a311363",
+    "src/stdarg.h": "e4486e0ac957bd4af610516c7a5dd5b10a827331a205f1c22d23a713666a2cc7",
+    "src/stddef.h": "2d4c9a083e016ab82b1d18e06b036338fc18690ec139dea108f55a8b6787bc9c",
+    "src/stdio.h": "1ff66973881e2febd69b7d93362a63d2b820a3becf0edb251180852a1ea921c6",
+    "src/stdlib.h": "55c39f3f0c96a2c68d8e675bdac502c58d38cc05302bd192e1d25f35cda7df96",
+    "src/string.c": "956fb293cbfe8bbc4da4115b0b19bc36ec28cb8024a029f1bbb553b839ea952a",
+    "src/string.h": "7f754f9d4cdf6c8ec03f06ba39bdf213437fecb02a0414e5bb54e4f48f8e283d",
+    "src/types.h": "b0075e2e0f55aa810f764b7c07d76922978eb8ff6f51ad263bbd24510da59fec",
+    "src/uart.c": "b100da71eafcd921530798cb0869032745e825c4c6141ae9a5911ba1f5367b75",
+    "src/uart.h": "0300ce250bc4e9a04d730daddc276fcbda760266933d672421de5d0fd3f5ab6a"
+  },
+  "makefile_sha256": "f130054d9c19f419411dacc311f4c0a4437ab9b4556237353c0127385802920a",
+  "kernel_sha256": "9e9475436f574bf4fa39def2e72dc49fa8b18ca44d3334cb6a297db3ee13c2c8",
+  "uart_log": "uart.txt",
+  "uart_sha256": "55a5d4c251981f5bd18455bed4f1bd454b8cc7d241b95dc3ff00992e0ee57154",
+  "captures": [
+    {
+      "file": "uart.png",
+      "trigger": "EVIDENCE: UART PASS direct_tx=1 console_mirror=1",
+      "settle_seconds": 0,
+      "sha256": "5a2501d7597fc33a73cd7129681db32e14f84d2f60d0364c9b02094fe81835d2"
+    }
+  ]
+}

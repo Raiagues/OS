@@ -1,16 +1,21 @@
 # 5. UART output
 
-Implementation: [uart.c](../src/uart.c), with hardware definitions in [cep_platform.h](../src/cep_platform.h).
+Open the standalone [UART example](../examples/04-uart/README.md), starting at [src/main.c](../examples/04-uart/src/main.c). Its [uart.c](../examples/04-uart/src/uart.c), [hardware definitions](../examples/04-uart/src/cep_platform.h), console, font and build files are all local to that folder.
 
 UART means *Universal Asynchronous Receiver/Transmitter*. Here the kernel writes device registers, and QEMU delivers the transmitted bytes to a terminal or file. The implemented direction is **TX**, transmission. RX definitions exist in the headers, but keyboard input is not implemented.
 
 ## Compare two output paths
 
+From the repository root:
+
 ```sh
-./run.sh DEMO=uart
+cd examples/04-uart
+./run.sh
 ```
 
-The example sends `UART_ONLY` directly through `traite_car_uart`, then writes `CONSOLE_MIRROR` through `console_putbytes`.
+With Docker and the display helpers installed, run `./scripts/run-container.sh` from the same folder. This launcher always runs this example; it takes no demo selector.
+
+`kernel_start` sends `UART_ONLY` directly through `traite_car_uart`, then writes `CONSOLE_MIRROR` through `console_putbytes`. There is no timer or scheduler in this example.
 
 Compare the [screen](evidence/uart.png) with the [serial log](evidence/uart.txt): the direct message only appears in the log; the console message appears in both. This is the same output mechanism used by the process demonstration.
 
@@ -49,16 +54,16 @@ uart[0] = (uint8_t)c;
 
 Bit 31 indicates a full transmit FIFO. The loop waits for space, then writes a byte. This is *polling*. Device accesses use `volatile`; there is no interrupt-driven output queue.
 
-`console_putbytes` disables interrupts while writing its buffer. That prevents a timer switch within this output operation, at the cost of delaying interrupt handling while it runs.
+`console_putbytes` saves the interrupt-enable state, disables interrupts while writing its buffer, then restores that state. This standalone example leaves interrupts disabled. In the complete kernel, the same protection prevents a timer switch during an output operation, at the cost of delaying interrupt handling.
 
 ## QEMU and the host terminal
 
 The graphical launcher uses `-serial mon:stdio`. The UART and QEMU monitor share the terminal; monitor commands belong to the emulator, not to a shell in this kernel. The capture script uses `-serial file:<path>` instead. [QEMU invocation reference](https://www.qemu.org/docs/master/system/invocation.html).
 
-To run the same CEP example without a window:
+To run without a window, from `examples/04-uart`:
 
 ```sh
-sh scripts/course-env.sh make DEMO=uart run-serial
+sh scripts/course-env.sh make run-serial
 ```
 
-The `virt` port uses a different device: an NS16550A at `0x10000000`, accessed as bytes. The build selects the driver for the chosen platform. Both backends implement transmission only.
+The complete kernel also has a [`virt` UART backend](../src/uart.c): an NS16550A at `0x10000000`, accessed as bytes. The standalone example contains only the CEP driver. Both drivers implement transmission only.

@@ -1,0 +1,41 @@
+{
+  "generated_utc": "2026-10-27T14:47:54.413269+00:00",
+  "status": "PASS",
+  "platform": "cep",
+  "capture_method": "Actual 1280x720 framebuffer at 0x80000000 read with QMP pmemsave; lossless PNG encoding",
+  "qemu": "QEMU emulator version 6.2.50 (v6.2.0-238-g8b39174f19-dirty)",
+  "compiler": "riscv64-unknown-elf-gcc (GCC) 11.1.0",
+  "architecture": "rv64ima",
+  "mode": "pixels",
+  "project": "examples/01-pixels",
+  "make": "make -C examples/01-pixels PLATFORM=cep",
+  "sources_sha256": {
+    "src/console.c": "b95fb6570f39a2e32d64fb1df3512e3e67f3a364045ca355b4c7e100edece673",
+    "src/console.h": "d0a154ad06d207ca8bd61dbe89e7f9bb16456b897576dcabbb52a004289c5d98",
+    "src/cpu.h": "c687362779c9714326aedeb9e02c78470b9f8a089f5ccd7bdfc8f74053a62c39",
+    "src/crt0.S": "c5cfaff51509427012c152491cc2f6aebecf9d35c0258b7667d669bdbc9dd54b",
+    "src/font.c": "64c8ddec439750fcee74bbfbfd710bde4ce039dabb2eef04518d08db7ee94b6b",
+    "src/font.h": "3c1e6de5ffd2139764521da868687f78939b60704ff8f021077fc39ec869ba76",
+    "src/inttypes.h": "636168e19f74d13b9911f7e96d49b162fbca5e6c780513ee5bdb8f7f8fd2624e",
+    "src/kernel.lds": "cb73361a42deb0d87a065290a8eacc35aeb2bea6cb4007ee38b50114ef37a156",
+    "src/main.c": "490fe6e6862f738abe2fdedd955f9565bf3bf59592a89103bbb2572104030aca",
+    "src/stddef.h": "2d4c9a083e016ab82b1d18e06b036338fc18690ec139dea108f55a8b6787bc9c",
+    "src/string.c": "fa644ef28c52c832a16541cb8d713851b2b9888794e1f9079f4502d493a1e99f",
+    "src/string.h": "56ca39514e74afeb04872f1bb4f43aa05ea1f73c965c25cee63d84bc7e698f52",
+    "src/types.h": "b0075e2e0f55aa810f764b7c07d76922978eb8ff6f51ad263bbd24510da59fec",
+    "src/uart.c": "94c17405b3551a03b8b146874c6e5f40982811d60738720bffe3749b7f30704d",
+    "src/uart.h": "8aa50080e35c29db55d492b79b6126f661b5ca650746bd9ef8e221dfbb9e1bff"
+  },
+  "makefile_sha256": "e46edd6b0b1ffa8e4581c4d8e17e7bb61593ed789631d017a8b05093206fc4fc",
+  "kernel_sha256": "1668da85d41cae10130b65d76a6a8fafd2f74f0c20653629c3904e448c3937f1",
+  "uart_log": "pixels.txt",
+  "uart_sha256": "3fed05b9ab142dc0b00327dc957517ea432c92f346604defa1a4c1795dc47a2c",
+  "captures": [
+    {
+      "file": "pixels.png",
+      "trigger": "EVIDENCE: PIXELS PASS",
+      "settle_seconds": 0,
+      "sha256": "fad55ef1861a54d53e2dbcea45eb883594835d01b213d956178d3b0725d7e26c"
+    }
+  ]
+}

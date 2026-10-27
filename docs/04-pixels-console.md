@@ -1,16 +1,23 @@
 # 4. Pixels and console
 
-Implementation: [console.c](../src/console.c), [console.h](../src/console.h) and [font.c](../src/font.c).
+This chapter uses three independent projects: [pixels](../examples/01-pixels/README.md), [console controls](../examples/02-console/README.md) and [scrolling](../examples/03-scroll/README.md). Each folder contains its own entry point, drivers, font, runtime, Makefile and launchers. You can copy a folder elsewhere and build it there.
 
-## Run a small example
+Start with [the pixel example’s main.c](../examples/01-pixels/src/main.c), then read its local [console.c](../examples/01-pixels/src/console.c), [console.h](../examples/01-pixels/src/console.h) and [font.c](../examples/01-pixels/src/font.c).
+
+## Run the pixel example
+
+From the repository root, with the [local CEP tools configured](08-run-and-verify.md#local-cep-toolchain):
 
 ```sh
-./run.sh DEMO=pixels
+cd examples/01-pixels
+./run.sh
 ```
+
+For the [Docker setup](08-run-and-verify.md#graphical-run-with-docker), enter the same folder and run `./scripts/run-container.sh`. Both launchers build this folder’s `src/main.c`.
 
 Rows 1–4 each show all 95 printable ASCII characters, from space (32) through `~` (126), including punctuation. The rows are red, green, blue and white, using the normal 8 × 8 font. The screen stays static.
 
-A 1,602-character paragraph follows the colored rows. It passes through `console_putbytes` as one string without newline bytes. The console automatically starts a new row after 160 characters; it wraps by character, so a word can cross the right edge.
+In `kernel_start`, a short loop creates the ASCII string and four calls to `color_text` draw it. A 1,602-character paragraph follows the colored rows. It passes through `console_putbytes` as one string without newline bytes. The console automatically starts a new row after 160 characters; it wraps by character, so a word can cross the right edge.
 
 Compare the [framebuffer capture](evidence/pixels.png) with the [UART log](evidence/pixels.txt). The long paragraph wraps on screen even though the string contains no explicit line breaks.
 
@@ -55,7 +62,7 @@ byte    pixels, bit 0 on the left
 
 Watch the argument order: `pixel(column, row, color)` uses pixel coordinates; `ecrit_car(row, column, character)` uses text cells. `ecrit_car` draws white. The color example follows the same short bitmap loop with a selected color; it does not change the console API.
 
-There are 160 text columns and 90 physical text rows. Row 0 holds the clock and process states; regular output starts at row 1.
+There are 160 text columns and 90 physical text rows. Regular output starts at row 1, leaving row 0 reserved. The scrolling example uses it for a header; the complete kernel uses it for the clock and process states. These three static examples have no timer or scheduler.
 
 ## From `printf` to the screen
 
@@ -80,18 +87,30 @@ flowchart LR
 | `\t` | Next multiple of eight columns, wrapping at the right edge |
 | `\f` | Clear the display and move the cursor to row 1, column 0 |
 
-Try `./run.sh DEMO=console` and compare the [capture](evidence/console.png) with its [log](evidence/console.txt). The code uses short strings such as `AB\bC` and `ABC\rZ`, so the result can be followed character by character.
+Run the independent console project from the repository root:
+
+```sh
+cd examples/02-console
+./run.sh
+```
+
+Or use `./scripts/run-container.sh` from that folder. Compare the [capture](evidence/console.png) with its [log](evidence/console.txt). Its [main.c](../examples/02-console/src/main.c) contains a linear sequence of short strings such as `AB\bC` and `ABC\rZ`; follow each call into the local [console driver](../examples/02-console/src/console.c).
 
 `place_curseur` moves the underline cursor. `efface_char` clears a cell before overwriting it. Calling `ecrit_car` alone only draws the set font bits; it does not clear the cell first. The font and driver handle ASCII bytes, not Unicode text.
 
 ## Scrolling
 
+From the repository root:
+
 ```sh
-./run.sh DEMO=scroll
+cd examples/03-scroll
+./run.sh
 ```
+
+The Docker command is again `./scripts/run-container.sh` from inside this folder. Open [main.c](../examples/03-scroll/src/main.c): the example writes a header, then prints numbered lines in one loop.
 
 After writing 100 numbered lines, [the capture](evidence/scroll.png) shows lines 12 through 99. [The log](evidence/scroll.txt) contains all 100.
 
-`defilement` uses `memmove` to shift the text area up by eight pixel rows, leaves row 0 in place and clears the last row. Source and destination overlap, which is why this operation needs `memmove`.
+The local [console driver’s `defilement`](../examples/03-scroll/src/console.c) uses `memmove` to shift the text area up by eight pixel rows, leaves row 0 in place and clears the last row. Source and destination overlap, which is why this operation needs `memmove`.
 
-A useful exercise is to change one test string, predict the cursor position, run it, and compare. The examples and capture script provide observations; the screenshots do not prove every possible coordinate or control-byte sequence.
+A useful exercise is to change one test string, predict the cursor position, run it, and compare. Each folder includes its recorded output under `evidence/`. The examples and capture script provide observations; the screenshots do not prove every possible coordinate or control-byte sequence.

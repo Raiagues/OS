@@ -9,8 +9,9 @@ The default **CEP** platform has a 1280 × 720 framebuffer. The **`virt`** backe
 ```mermaid
 flowchart TD
     E["ELF entry: assembly startup"] --> K["kernel_start: initialize devices"]
-    K --> D["Selected demo"]
-    D --> C["console_putbytes"]
+    K --> P["Create proc1, proc2 and proc3"]
+    P --> I["Enter idle"]
+    D["Task functions"] --> C["console_putbytes"]
     C --> F["Font bits → framebuffer pixels"]
     C --> U["UART transmit register"]
     K --> T["Timer interrupt"]
@@ -23,34 +24,44 @@ flowchart TD
 
 Assembly handles startup, trap entry and context switching where explicit register control is necessary. C handles formatting, device access, task state and scheduling policy. Tasks share the kernel's memory and privileges.
 
-## What to run
+## Start with the independent examples
 
-The commands below use local CEP tools configured in [Run and verify](08-run-and-verify.md). With Docker, use `./scripts/run-container.sh` followed by the demo name instead.
+Six numbered projects introduce the mechanisms one at a time. Start with each folder's README, then open its `src/main.c`. Every folder contains all the source, headers, boot code, linker script, Makefile, launchers and recorded output it needs. You can copy any one of these folders and build it independently.
 
-| Command | What it demonstrates | Recorded output |
+| Project and starting instructions | Main source | What to observe |
 | --- | --- | --- |
-| `./run.sh` | Three tasks sleeping, waking and terminating while the clock runs | [Start](evidence/processes-start.png), [end](evidence/processes-end.png), [log](evidence/processes.txt) |
-| `./run.sh DEMO=pixels` | Four colored rows of printable ASCII and automatic wrapping of a long paragraph | [Screen](evidence/pixels.png), [log](evidence/pixels.txt) |
-| `./run.sh DEMO=console` | Newline, tab, backspace, carriage return and screen clearing | [Screen](evidence/console.png), [log](evidence/console.txt) |
-| `./run.sh DEMO=scroll` | Scrolling after more text is written than fits on screen | [Screen](evidence/scroll.png), [log](evidence/scroll.txt) |
-| `./run.sh DEMO=uart` | Direct serial output and text mirrored to the screen | [Screen](evidence/uart.png), [log](evidence/uart.txt) |
-| `./run.sh DEMO=clock` | Timer interrupts with only `idle` running | [Screen](evidence/clock.png), [log](evidence/clock.txt) |
+| [01 — Pixels](../examples/01-pixels/README.md) | [main.c](../examples/01-pixels/src/main.c) | Printable ASCII in four colors and automatic paragraph wrapping: [screen](evidence/pixels.png), [log](evidence/pixels.txt) |
+| [02 — Console](../examples/02-console/README.md) | [main.c](../examples/02-console/src/main.c) | Newline, tab, backspace, carriage return and clear: [screen](evidence/console.png), [log](evidence/console.txt) |
+| [03 — Scrolling](../examples/03-scroll/README.md) | [main.c](../examples/03-scroll/src/main.c) | Move overlapping framebuffer rows while preserving a header: [screen](evidence/scroll.png), [log](evidence/scroll.txt) |
+| [04 — UART](../examples/04-uart/README.md) | [main.c](../examples/04-uart/src/main.c) | Direct serial output and console output mirrored to UART: [screen](evidence/uart.png), [log](evidence/uart.txt) |
+| [05 — Clock](../examples/05-clock/README.md) | [main.c](../examples/05-clock/src/main.c) | Timer interrupts and a clock without a scheduler: [screen](evidence/clock.png), [log](evidence/clock.txt) |
+| [06 — Processes](../examples/06-processes/README.md) | [main.c](../examples/06-processes/src/main.c) | Sleeping, waking and terminating tasks: [start](evidence/processes-start.png), [end](evidence/processes-end.png), [log](evidence/processes.txt) |
 
-Close each QEMU instance before starting the next. `DEMO` selects a build configuration; it is not a command entered into a guest shell.
+With the [local CEP tools configured](08-run-and-verify.md#local-cep-toolchain), start from the repository root:
 
-## Code map
+```sh
+cd examples/01-pixels
+./run.sh
+```
+
+For Docker, run `./scripts/run-container.sh` inside the selected folder. Close QEMU before starting another project. Each launcher runs the project in its own folder.
+
+The repository root contains the complete kernel. From there, `./run.sh` or `./scripts/run-container.sh` starts the graphical console, clock and three tasks together. The independent process example exposes the same complete task lifecycle in its own project.
+
+## Complete kernel code map
 
 | Component | Source | Responsibility |
 | --- | --- | --- |
 | Build and memory layout | [Makefile](../Makefile), [kernel.lds](../src/kernel.lds) | Select the platform, compile objects and place ELF sections |
-| Startup | [crt0.S](../src/crt0.S), [start.c](../src/start.c) | Set `gp` and `sp`, clear `.bss`, initialize devices and select the demo |
+| Startup | [crt0.S](../src/crt0.S), [main.c](../src/main.c) | Set `gp` and `sp`, clear `.bss`, initialize devices and create the tasks |
 | Platform constants | [cep_platform.h](../src/cep_platform.h) | Device addresses, timer frequency and register fields |
 | Graphical console | [console.c](../src/console.c), [font.c](../src/font.c) | Pixels, 8 × 8 characters, cursor, control bytes and scrolling |
 | Serial output | [uart.c](../src/uart.c), [console_serial.c](../src/console_serial.c) | Polling UART transmission and the `virt` console backend |
 | Timer and traps | [time.c](../src/time.c), [traitant.S](../src/traitant.S) | Program deadlines, preserve interrupted registers and dispatch the timer interrupt |
 | Task management | [processus.c](../src/processus.c), [processus.h](../src/processus.h) | Creation, identity, round-robin selection, sleep and exit |
 | Context switching | [ctxt.S](../src/ctxt.S) | Save and restore the task's stack pointer, return address and machine context |
-| Examples | [demos.c](../src/demos.c), [test_student.c](../src/test_student.c) | Exercise individual devices and the complete task lifecycle |
+| Task bodies and idle loop | [main.c](../src/main.c) | Define the three task functions, their sleeps and the idle loop |
+| Automated test kernel | [tests/kernel](../tests/kernel/README.md), [its main.c](../tests/kernel/src/main.c) | Independent executable for formatting, preemption, sleep and exit checks |
 | Host-side verification | [test_qemu.py](../scripts/test_qemu.py), [capture_evidence.py](../scripts/capture_evidence.py) | Run kernels, check output and capture the actual framebuffer |
 
 ## Task lifecycle
@@ -81,6 +92,6 @@ sh scripts/course-env.sh make test
 sh scripts/course-env.sh python3 scripts/capture_evidence.py
 ```
 
-The integration test checks boot, formatting bounds, sleep, termination and timer preemption. The capture script runs the CEP examples and reads video memory through QMP. Screenshots show output; UART logs record transmitted bytes; the busy-loop test checks preemption. Use each for the behavior it can establish.
+Run these commands from the repository root. `make test` builds the complete kernel and the independent `tests/kernel` project for `virt`, then checks boot, formatting bounds, sleep, termination and timer preemption. The capture script runs the CEP examples and reads video memory through QMP. Screenshots show output; UART logs record transmitted bytes; the busy-loop test checks preemption. Use each for the behavior it can establish.
 
 Start the implementation walkthrough at [Build the kernel step by step](09-development.md), or use [Run and verify](08-run-and-verify.md) for installation and evidence collection.

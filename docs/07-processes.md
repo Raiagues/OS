@@ -2,17 +2,26 @@
 
 Three C functions take turns on one hart. Each keeps its own stack and continuation point; the scheduler chooses which receives the CPU. These **kernel processes** share memory and M-mode privileges. There is no process isolation or system-call boundary.
 
-## Run the complete demo
+## Run the independent process project
+
+[examples/06-processes](../examples/06-processes/README.md) contains every source file, header, boot routine, linker script and launcher needed for this example. Its [main.c](../examples/06-processes/src/main.c) directly defines `kernel_start`, the three task functions and `idle`. You can copy this folder elsewhere and build it on its own.
+
+From the repository root, with local CEP tools installed:
 
 ```bash
+cd examples/06-processes
 ./run.sh
 ```
+
+To use the pinned compiler/QEMU image instead, run `./scripts/run-container.sh` from that same folder. The [local README](../examples/06-processes/README.md) lists dependencies. Standard QEMU can run the serial backend with `make PLATFORM=virt run`.
+
+Each build stays inside the project: `examples/06-processes/build/cep/kernel.elf` for CEP and `examples/06-processes/build/virt/kernel.elf` for `virt`. The complete kernel at the repository root has its own [main.c](../src/main.c) and build directory.
 
 ![Process demo after startup](evidence/processes-start.png)
 
 ![Process demo after all three tasks finish](evidence/processes-end.png)
 
-Use the [serial log](evidence/processes.txt) to follow events between these captures. The [process demonstration](../src/test_student.c) defines:
+Use the [serial log](evidence/processes.txt) to follow events between these captures. The independent project's [main.c](../examples/06-processes/src/main.c) defines:
 
 | Task | PID | Work | Exit path |
 | --- | --- | --- | --- |
@@ -25,7 +34,7 @@ The second messages normally appear around kernel seconds 2, 3 and 4; tasks fini
 
 ## The task record
 
-[processus.h](../src/processus.h) defines `processus_t`:
+[processus.h](../examples/06-processes/src/processus.h) defines `processus_t`:
 
 | Field | Purpose |
 | --- | --- |
@@ -42,7 +51,7 @@ Each stack reserves **32 KiB**, aligned to 16 bytes. There are **four slots incl
 
 ## Creation prepares a future call
 
-[cree_processus](../src/processus.c) rejects invalid arguments or a full table with `-1`. Otherwise it clears a slot, assigns the PID and name, prepares the stack and context, marks the task `RUNNABLE`, and returns its PID. The task function has not run yet.
+[cree_processus](../examples/06-processes/src/processus.c) rejects invalid arguments or a full table with `-1`. Otherwise it clears a slot, assigns the PID and name, prepares the stack and context, marks the task `RUNNABLE`, and returns its PID. The task function has not run yet.
 
 The new context includes:
 
@@ -87,7 +96,7 @@ stateDiagram-v2
 
 ## Round-robin scheduling
 
-[ordonnance](../src/processus.c) first wakes tasks whose deadlines have passed. If the active task was `RUN`, it becomes `RUNNABLE`. The scheduler then searches circularly from the next PID, skipping `WAIT` and `DIE` entries:
+[ordonnance](../examples/06-processes/src/processus.c) first wakes tasks whose deadlines have passed. If the active task was `RUN`, it becomes `RUNNABLE`. The scheduler then searches circularly from the next PID, skipping `WAIT` and `DIE` entries:
 
 ```text
 idle → proc1 → proc2 → proc3 → idle → ...
@@ -99,7 +108,7 @@ The timer requests scheduling every 50 ms nominally. A task may sleep or exit so
 
 ## Switching stacks switches continuations
 
-[ctx_sw](../src/ctxt.S) receives pointers to the old and new contexts in `a0` and `a1`. It saves one context, restores the other, and returns using the **next task's stack and return address**.
+[ctx_sw](../examples/06-processes/src/ctxt.S) receives pointers to the old and new contexts in `a0` and `a1`. It saves one context, restores the other, and returns using the **next task's stack and return address**.
 
 | `reg[]` index | Saved value |
 | --- | --- |
@@ -112,7 +121,7 @@ The timer requests scheduling every 50 ms nominally. A task may sleep or exit so
 
 These 18 values occupy 144 bytes. The stack itself stays in memory; saving its pointer is enough to find it again.
 
-For a timer-triggered switch, [traitant.S](../src/traitant.S) has also saved `ra`, `a0..a7` and `t0..t6` in a **128-byte interrupt frame**. C calls preserve `s0..s11`, while arguments and temporaries need that explicit interrupt protection. See the [RISC-V ABI](https://riscv-non-isa.github.io/riscv-elf-psabi-doc/).
+For a timer-triggered switch, [traitant.S](../examples/06-processes/src/traitant.S) has also saved `ra`, `a0..a7` and `t0..t6` in a **128-byte interrupt frame**. C calls preserve `s0..s11`, while arguments and temporaries need that explicit interrupt protection. See the [RISC-V ABI](https://riscv-non-isa.github.io/riscv-elf-psabi-doc/).
 
 ```mermaid
 sequenceDiagram
@@ -137,28 +146,35 @@ Table updates and stack switching run with interrupts disabled. Each caller rest
 
 ## Prove preemption
 
-The main demo calls `dors`, so it could run under a cooperative scheduler. Preemption needs a task that does not yield:
+The process example calls `dors`, so its output alone does not prove preemption: a cooperative scheduler could also run it. The separate [tests/kernel project](../tests/kernel/README.md) contains a dedicated [main.c](../tests/kernel/src/main.c) with a task that does not yield.
+
+From the repository root, run the normal kernel and the regression executable under the automated checker:
 
 ```bash
 sh scripts/course-env.sh make test
 ```
 
-With `KERNEL_SELFTEST`, `proc1` busy-loops for two kernel seconds without calling `dors`, `ordonnance` or `wfi`. `proc2` must execute during that interval. If the timer cannot interrupt the loop, the condition fails or the external test times out.
+`make test` builds `build/virt/kernel.elf` from the root project and `tests/kernel/build/virt/kernel.elf` from the independent test project, then checks both runs. Their entry points are different source files; no compile-time test selector changes the teaching example.
 
-`SELFTEST: PREEMPT PASS` records that check. Other markers cover sleep and explicit/implicit exits. See the [self-test log](evidence/selftest.txt). `SLEEP PASS` and `PREEMPT PASS` can appear in either order; their conditions matter, not an arbitrary printing order.
+In the test project's `main.c`, `proc1` busy-loops for two kernel seconds without calling `dors`, `ordonnance` or `wfi`. `proc2` must execute during that interval. If the timer cannot interrupt the loop, the condition fails or the external test times out.
+
+To run just that project interactively with standard QEMU, enter `tests/kernel` and run `make PLATFORM=virt run`. Its sources, headers and build files are all local to that folder.
+
+`SELFTEST: PREEMPT PASS` records that check. Other markers cover sleep, explicit/implicit exits and formatting-buffer bounds. See the [self-test log](evidence/selftest.txt). `SLEEP PASS` and `PREEMPT PASS` can appear in either order; their conditions matter, not an arbitrary printing order.
 
 ## Inspect tasks in GDB
 
-In terminal 1:
+In terminal 1, starting from the repository root:
 
 ```bash
+cd examples/06-processes
 sh scripts/course-env.sh make debug
 ```
 
-In terminal 2:
+In terminal 2, from the repository root:
 
 ```bash
-gdb-multiarch build/cep/kernel.elf
+gdb-multiarch examples/06-processes/build/cep/kernel.elf
 ```
 
 At the GDB prompt:

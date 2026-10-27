@@ -10,7 +10,7 @@ ELF Header:
   Version:                           0x1
   Entry point address:               0x1000
   Start of program headers:          64 (bytes into file)
-  Start of section headers:          107608 (bytes into file)
+  Start of section headers:          105848 (bytes into file)
   Flags:                             0x0
   Size of this header:               64 (bytes)
   Size of program headers:           56 (bytes)
@@ -23,10 +23,10 @@ Program Headers:
   Type           Offset             VirtAddr           PhysAddr
                  FileSiz            MemSiz              Flags  Align
   LOAD           0x0000000000001000 0x0000000000001000 0x0000000000001000
-                 0x00000000000022c8 0x00000000000022c8  R E    0x1000
-  LOAD           0x00000000000032d0 0x00000000000032d0 0x00000000000032d0
+                 0x00000000000022ac 0x00000000000022ac  R E    0x1000
+  LOAD           0x00000000000032b0 0x00000000000032b0 0x00000000000032b0
                  0x0000000000000418 0x0000000000000418  R      0x1000
-  LOAD           0x00000000000036f0 0x00000000000036f0 0x00000000000036f0
+  LOAD           0x00000000000036d0 0x00000000000036d0 0x00000000000036d0
                  0x0000000000000808 0x0000000000024b80  RW     0x1000
 
  Section to Segment mapping:

@@ -22,10 +22,11 @@ jobs:
         run: make PLATFORM=virt check
       - name: Compile and run QEMU tests
         run: make test
-      - name: Compile every CEP demonstration with the current compiler
+      - name: Compile each independent example with the current compiler
         run: |
-          for demo in processes pixels console scroll uart clock; do
-            make PLATFORM=cep DEMO="$demo"
+          make PLATFORM=cep
+          for project in examples/*/; do
+            make -C "$project" PLATFORM=cep
           done
       - name: Save binaries and test logs
         if: always()
@@ -36,6 +37,10 @@ jobs:
             build/**/*.elf
             build/**/*.map
             build/**/*.log
+            examples/*/build/**/*.elf
+            examples/*/build/**/*.map
+            tests/kernel/build/**/*.elf
+            tests/kernel/build/**/*.log
           if-no-files-found: ignore
 
   cep-evidence:

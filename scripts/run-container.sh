@@ -5,17 +5,16 @@ set -eu
 
 usage() {
     printf '%s\n' \
-        'Usage: ./scripts/run-container.sh [processes|pixels|console|scroll|uart|clock]' \
-        'Default: processes. Opens the graphical interface in a Xephyr window.' \
+        'Usage: ./scripts/run-container.sh' \
+        'Opens this process example in a Xephyr window.' \
         'Requires Docker, xserver-xephyr, xauth and an X11 or XWayland session.' \
         'Ctrl+C stops QEMU and removes the temporary container and display credentials.'
 }
-case ${1:-processes} in
-    -h|--help) usage; exit 0 ;;
-    processes|pixels|console|scroll|uart|clock) demo=${1:-processes} ;;
-    *) usage >&2; exit 2 ;;
-esac
-if [ "$#" -gt 1 ]; then
+if [ "${1-}" = -h ] || [ "${1-}" = --help ]; then
+    usage
+    exit 0
+fi
+if [ "$#" -ne 0 ]; then
     usage >&2
     exit 2
 fi
@@ -74,7 +73,7 @@ session_auth=$session_dir/Xauthority
 cookie=$(od -An -N16 -tx1 /dev/urandom | tr -d ' \n')
 xauth -f "$session_auth" add :0 MIT-MAGIC-COOKIE-1 "$cookie"
 TMPDIR="$session_dir" Xephyr -displayfd 3 -screen 1280x720 -nolisten tcp -auth "$session_auth" \
-    -title "OS - $demo (container)" 3> "$session_dir/display" \
+    -title "Processes - CEP (container)" 3> "$session_dir/display" \
     > "$session_dir/xephyr.log" 2>&1 &
 xephyr_pid=$!
 attempt=0
@@ -90,7 +89,7 @@ done
 nested_display=$(cat "$session_dir/display")
 xauth -f "$session_auth" add ":$nested_display" MIT-MAGIC-COOKIE-1 "$cookie"
 unset cookie
-printf 'Demo: %s. The interface appears after compilation.\n' "$demo"
+printf 'Processes: the interface appears after compilation.\n'
 printf 'The first run downloads the toolchain image if it is not already installed.\n'
 printf 'UART output appears in this terminal. Press Ctrl+C to stop.\n'
 
@@ -106,17 +105,16 @@ docker run --rm --init --cidfile "$cid_file" --platform linux/amd64 --ulimit cor
     --env "DISPLAY=:$nested_display" --env XAUTHORITY=/tmp/os-xauthority \
     --env SDL_VIDEODRIVER=x11 --workdir /workspace \
     --entrypoint sh "$image" -ec '
-        demo=$1
         course_tools=/matieres/4MMPCSEA/xinul/bin
-        build_dir=build/container/cep-$demo
-        make PLATFORM=cep SELFTEST=0 DEMO="$demo" BUILD="$build_dir" \
+        build_dir=build/container/cep
+        make PLATFORM=cep BUILD="$build_dir" \
             CROSS_COMPILE="$course_tools/riscv64-unknown-elf-" \
             RISCV_ARCH=rv64ima all
         exec "$course_tools/qemu-system-riscv64" \
             -machine cep -bios none -kernel "$build_dir/kernel.elf" \
-            -m 32M -smp 1 -name "OS - $demo" \
+            -m 32M -smp 1 -name "Processes - CEP" \
             -display sdl,show-cursor=on -serial stdio -monitor none -no-user-config
-    ' sh "$demo" &
+    ' &
 docker_pid=$!
 # QEMU can keep running after the X server closes. Watch both processes so
 # closing the window has the same cleanup behavior as interrupting the script.

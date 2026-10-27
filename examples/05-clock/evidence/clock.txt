@@ -1,0 +1,10 @@
+Clock and timer: 20 interrupts per second.
+clock=0s | timer interrupts=20 Hz
+EVIDENCE: CLOCK SECOND=0
+clock=1s | timer interrupts=20 Hz
+EVIDENCE: CLOCK SECOND=1
+clock=2s | timer interrupts=20 Hz
+EVIDENCE: CLOCK SECOND=2
+clock=3s | timer interrupts=20 Hz
+EVIDENCE: CLOCK SECOND=3
+EVIDENCE: CLOCK PASS

@@ -1,0 +1,10 @@
+/build/
+*.o
+*.d
+*.elf
+*.bin
+*.log
+*.map
+*.swp
+*~
+.gdb_history

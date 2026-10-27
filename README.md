@@ -2,51 +2,54 @@
 
 A small operating system written in C and RISC-V assembly. It runs on one emulated CPU in QEMU, with a graphical console, UART output, timer interrupts and a round-robin scheduler.
 
-**[Read the tutorials and explore the interactive diagrams](https://raiagues.github.io/OS/)**
+**[Tutorials, real screenshots and interactive diagrams](https://raiagues.github.io/OS/)**
 
-The graphical display uses a 1280 × 720 framebuffer and an 8 × 8 bitmap font. Three processes run alongside `idle`, each with its own stack, sleep deadline and saved registers.
+## Start with one small project
 
-## Run
+Each example is a complete project with its own source files, Makefile, launchers, README and captured output. You can copy one folder elsewhere and build it on its own. Open its `src/main.c` first.
 
-On Linux/amd64 with Docker, Xephyr and xauth installed:
+| Folder | What to learn |
+| --- | --- |
+| [01-pixels](examples/01-pixels/README.md) | Pixel addresses, bitmap characters, colors and wrapping |
+| [02-console](examples/02-console/README.md) | Cursor movement, newline, tab, backspace and clear |
+| [03-scroll](examples/03-scroll/README.md) | Moving text when the screen fills |
+| [04-uart](examples/04-uart/README.md) | Sending bytes and comparing serial output with the screen |
+| [05-clock](examples/05-clock/README.md) | Timer interrupts and a clock, without a scheduler |
+| [06-processes](examples/06-processes/README.md) | Separate stacks, context switching, sleep and exit |
+
+For example, with Docker, Xephyr and xauth installed on Linux/amd64:
 
 ```sh
 git clone https://github.com/Raiagues/OS.git
-cd OS
+cd OS/examples/02-console
 ./scripts/run-container.sh
 ```
 
-The launcher opens the QEMU graphical window. Three processes sleep for 2, 3 and 4 seconds, twice each, then terminate. `idle` keeps running and the clock continues. Close the window to exit.
+With CEP tools installed locally, use `./run.sh` in that same folder. Both commands run just the console example. See [installation](docs/08-run-and-verify.md) for dependency setup and [the example index](examples/README.md) for the reading order.
 
-**[Installation and first run](docs/08-run-and-verify.md)** explains the dependencies, Docker setup, local CEP tools and standard-QEMU serial mode. With CEP tools installed locally, use `./run.sh`.
+## Run the complete kernel
 
-## Try each feature
+From the repository root:
 
 ```sh
-./scripts/run-container.sh pixels    # Four static colored ASCII rows and automatic wrapping
-./scripts/run-container.sh console   # Newline, tab, backspace, carriage return and clear
-./scripts/run-container.sh scroll    # Write more lines than fit on screen
-./scripts/run-container.sh uart      # Direct UART output and console output
-./scripts/run-container.sh clock     # Run the clock with idle only
+./scripts/run-container.sh
 ```
 
-With local CEP tools, the equivalent is `./run.sh DEMO=pixels`, and so on. The small examples call kernel functions directly in [demos.c](src/demos.c); the [process example](src/test_student.c) exercises scheduling, sleep and termination.
+Or use `./run.sh` with local CEP tools. Three processes sleep for 2, 3 and 4 seconds, twice each, then terminate. `idle` keeps running and the clock continues. Close the QEMU window to exit.
 
-## Understand the implementation
+The complete kernel is in [src](src/), starting at [main.c](src/main.c). Its display uses a 1280 × 720 framebuffer and an 8 × 8 font. Keyboard input and a shell are not implemented; tasks share kernel memory and machine-mode privileges.
 
-Follow the **[project guide](docs/README.md)** to trace boot, pixel rendering, console output, UART, interrupts and context switching. Each chapter links to the code, explains the design and gives commands with expected results. The [implementation walkthrough](docs/09-development.md) connects these pieces step by step.
+## Understand and verify
 
-The site includes actual QEMU screenshots, UART logs and interactive models of bitmap rendering and task scheduling. Keyboard input and a command shell are not implemented. Tasks share kernel memory and machine-mode privileges.
+The [guide](docs/README.md) explains the code, design choices and expected output, from boot to context switching. The [implementation walkthrough](docs/09-development.md) connects the independent examples in order.
 
-## Verify
-
-With the RISC-V compiler and standard QEMU installed:
+With a RISC-V compiler and standard QEMU installed:
 
 ```sh
 make test
 ```
 
-This checks boot, sleep, termination, preemption and formatting bounds. The [capture instructions](docs/08-run-and-verify.md#capture-the-real-framebuffer) show how to save QEMU framebuffer images and UART logs. [Sample output](docs/evidence/) is included, and GitHub Actions runs the kernel tests and CEP captures.
+This runs the complete kernel and the separate [kernel regression project](tests/kernel/README.md), checking preemption, sleep, termination and formatting bounds. The [capture instructions](docs/08-run-and-verify.md#capture-the-real-framebuffer) regenerate each example's real screenshots and UART logs. GitHub Actions builds the independent projects and runs the checks.
 
 ## Credits
 

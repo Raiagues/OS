@@ -96,7 +96,7 @@ def main():
     parser.add_argument('--qemu', default='qemu-system-riscv64')
     parser.add_argument('--readelf', default='riscv64-unknown-elf-readelf')
     parser.add_argument('--demo', type=Path, default=Path('build/virt/kernel.elf'))
-    parser.add_argument('--selftest', type=Path, default=Path('build/virt-selftest/kernel.elf'))
+    parser.add_argument('--selftest', type=Path, default=Path('tests/kernel/build/virt/kernel.elf'))
     parser.add_argument('--timeout', type=float, default=25,
                         help='Maximum wall-clock seconds for each kernel')
     args = parser.parse_args()
