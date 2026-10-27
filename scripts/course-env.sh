@@ -1,5 +1,5 @@
 #!/bin/sh
-# Environment for the original Ensimag QEMU CEP installation on Linux x86_64.
+# Environment for the CEP compiler and QEMU on Linux x86_64.
 set -eu
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$repo_dir"
@@ -14,7 +14,7 @@ export QEMU="$course_tools/bin/qemu-system-riscv64"
 export RISCV_ARCH=rv64ima
 for tool in "${CROSS_COMPILE}gcc" "$QEMU"; do
     if [ ! -x "$tool" ]; then
-        printf 'Course tool not found: %s\nSet COURSE_TOOLS or use the normal installation from README.md.\n' "$tool" >&2
+        printf 'CEP tool not found: %s\nSet COURSE_TOOLS or use the normal installation from README.md.\n' "$tool" >&2
         exit 1
     fi
 done

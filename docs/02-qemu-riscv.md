@@ -31,7 +31,7 @@ The [Makefile](../Makefile) selects:
 
 A **hart** is a hardware execution thread. QEMU runs with `-smp 1`, so tasks take turns on one hart. Enabling the A extension does not make the scheduler multicore: it protects shared state by disabling interrupts on that single hart.
 
-The original toolchain accepts `rv64ima`; its assembler predates the explicit Zicsr spelling used by modern tools. [course-env.sh](../scripts/course-env.sh) selects that spelling. Instructions such as `csrr` and `csrw` still access control and status registers, or **CSRs**. See the [Zicsr specification](https://docs.riscv.org/reference/isa/v20260120/unpriv/zicsr.html) and [RISC-V ABI](https://riscv-non-isa.github.io/riscv-elf-psabi-doc/).
+The GCC 11 toolchain bundled with CEP accepts `rv64ima`; newer assemblers use the explicit `rv64ima_zicsr` spelling. [course-env.sh](../scripts/course-env.sh) selects that spelling. Instructions such as `csrr` and `csrw` still access control and status registers, or **CSRs**. See the [Zicsr specification](https://docs.riscv.org/reference/isa/v20260120/unpriv/zicsr.html) and [RISC-V ABI](https://riscv-non-isa.github.io/riscv-elf-psabi-doc/).
 
 ## QEMU supplies the machine
 
@@ -41,7 +41,7 @@ The graphical launch command uses these options:
 
 | Option | Effect |
 | --- | --- |
-| `-machine cep` | Select the course's custom machine |
+| `-machine cep` | Select the custom CEP machine |
 | `-bios none` | Skip the default firmware |
 | `-kernel build/cep/kernel.elf` | Load the kernel executable |
 | `-m 32M -smp 1` | Configure 32 MiB of memory and one hart |
@@ -52,7 +52,7 @@ QEMU displays the framebuffer, but [console.c](../src/console.c) draws the pixel
 
 ## CEP and `virt` have different memory maps
 
-**CEP** is the original course platform, available in its custom QEMU build. **`virt`** is an additional port for standard QEMU, using a serial console in this repository. Its devices are described in the [official `virt` documentation](https://www.qemu.org/docs/master/system/riscv/virt.html).
+**CEP** provides the graphical framebuffer and requires a custom QEMU build. **`virt`** runs with standard QEMU and uses a serial console in this project. Its devices are described in the [official `virt` documentation](https://www.qemu.org/docs/master/system/riscv/virt.html).
 
 | Resource | CEP | `virt` |
 | --- | --- | --- |
@@ -68,7 +68,7 @@ These addresses come from [cep_platform.h](../src/cep_platform.h), [uart.c](../s
 
 ## Try it
 
-From the repository root, list the machines supported by the course QEMU:
+From the repository root, list the machines supported by the CEP QEMU build:
 
 ```bash
 sh scripts/course-env.sh sh -c '"$QEMU" -machine help'

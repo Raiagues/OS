@@ -20,14 +20,14 @@ fi
 "$qemu" --version | head -n 1
 "$python" --version
 if ! "$qemu" -machine help | awk -v machine="$platform" '$1 == machine { found = 1 } END { exit !found }'; then
-    printf 'QEMU does not provide machine %s. CEP requires the custom course build.\n' "$platform" >&2
+    printf 'QEMU does not provide machine %s. CEP requires its custom QEMU build.\n' "$platform" >&2
     exit 1
 fi
 probe=$(mktemp -d)
 trap 'rm -rf "$probe"' EXIT HUP INT TERM
 printf '%s\n' 'void probe(void) { __asm__ volatile("csrr a0, mcause"); }' > "$probe/probe.c"
 if ! "${cross}gcc" -march="$arch" -mabi=lp64 -ffreestanding -c "$probe/probe.c" -o "$probe/probe.o"; then
-    printf '%s\n' 'The toolchain cannot compile the selected ISA. For the historical GCC 11 course toolchain only, use RISCV_ARCH=rv64ima.' >&2
+    printf '%s\n' 'The toolchain cannot compile the selected ISA. For the GCC 11 toolchain bundled with CEP, use RISCV_ARCH=rv64ima.' >&2
     exit 1
 fi
 printf 'Tools ready for PLATFORM=%s, RISCV_ARCH=%s.\n' "$platform" "$arch"

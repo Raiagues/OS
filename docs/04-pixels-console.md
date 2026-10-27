@@ -10,7 +10,7 @@ Implementation: [console.c](../src/console.c), [console.h](../src/console.h) and
 
 Rows 1–4 each show all 95 printable ASCII characters, from space (32) through `~` (126), including punctuation. The rows are red, green, blue and white, using the normal 8 × 8 font. The screen stays static.
 
-A paragraph longer than 1,000 characters follows the colored rows. It passes through the original `console_putbytes` as one string without newline bytes. The console automatically starts a new row after 160 characters; it wraps by character, so a word can cross the right edge.
+A 1,602-character paragraph follows the colored rows. It passes through `console_putbytes` as one string without newline bytes. The console automatically starts a new row after 160 characters; it wraps by character, so a word can cross the right edge.
 
 Compare the [framebuffer capture](evidence/pixels.png) with the [UART log](evidence/pixels.txt). The long paragraph wraps on screen even though the string contains no explicit line breaks.
 
@@ -31,7 +31,7 @@ volatile uint32_t *address =
 *address = couleur;
 ```
 
-This is the essential operation in `pixel`. `volatile` keeps the device access observable. The current implementation checks coordinates before writing; that bounds check was added during recovery.
+This is the essential operation in `pixel`. `volatile` keeps the device access observable. The function checks coordinates before writing so an invalid position cannot write beyond video memory.
 
 The framebuffer occupies 3,686,400 bytes. These addresses belong to CEP: on `virt`, `0x80000000` is kernel RAM, so the two platforms need different backends.
 
@@ -53,7 +53,7 @@ byte    pixels, bit 0 on the left
 
 `ecrit_car(row, column, 'A')` reads those bits and calls `pixel` for each set bit. Text coordinates are converted with `x = column * 8 + bit` and `y = row * 8 + font_row`.
 
-Watch the argument order: `pixel(column, row, color)` uses pixel coordinates; `ecrit_car(row, column, character)` uses text cells. The original `ecrit_car` draws white. The color example follows the same short bitmap loop with a selected color; it does not change the console API.
+Watch the argument order: `pixel(column, row, color)` uses pixel coordinates; `ecrit_car(row, column, character)` uses text cells. `ecrit_car` draws white. The color example follows the same short bitmap loop with a selected color; it does not change the console API.
 
 There are 160 text columns and 90 physical text rows. Row 0 holds the clock and process states; regular output starts at row 1.
 
@@ -92,6 +92,6 @@ Try `./run.sh DEMO=console` and compare the [capture](evidence/console.png) with
 
 After writing 100 numbered lines, [the capture](evidence/scroll.png) shows lines 12 through 99. [The log](evidence/scroll.txt) contains all 100.
 
-`defilement` uses `memmove` to shift the text area up by eight pixel rows, leaves row 0 in place and clears the last row. Source and destination overlap, which is why this operation needs `memmove`. Recovery fixed the copy bounds and last-row clearing.
+`defilement` uses `memmove` to shift the text area up by eight pixel rows, leaves row 0 in place and clears the last row. Source and destination overlap, which is why this operation needs `memmove`.
 
 A useful exercise is to change one test string, predict the cursor position, run it, and compare. The examples and capture script provide observations; the screenshots do not prove every possible coordinate or control-byte sequence.

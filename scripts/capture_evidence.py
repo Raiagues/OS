@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the real CEP kernel, assert its logs, and capture its framebuffer via QMP.
 
-Requires the course QEMU (machine cep). PNGs contain actual guest pixels;
+Requires the custom CEP QEMU build (machine cep). PNGs contain actual guest pixels;
 there is no simulated terminal rendering or image generation in this script.
 """
 import argparse
@@ -206,7 +206,7 @@ def main():
     report_path.unlink(missing_ok=True)  # Never keep a stale PASS after a failure.
     machines = subprocess.check_output([args.qemu, '-machine', 'help'], text=True)
     if not re.search(r'^cep\s', machines, re.M):
-        parser.error('This capture needs the course QEMU with machine cep.')
+        parser.error('This capture needs the custom QEMU build with machine cep.')
     scenarios = [
         ('pixels', [('EVIDENCE: PIXELS PASS\n', 'pixels.png', 0)]),
         ('console', [('EVIDENCE: CONSOLE PASS\n', 'console.png', 0)]),

@@ -1,12 +1,12 @@
 #!/bin/sh
-# Original CEP tools, pinned for Linux/amd64. Xephyr creates an isolated
+# CEP tools, pinned for Linux/amd64. Xephyr creates an isolated
 # graphical window; the container never receives the desktop session's cookie.
 set -eu
 
 usage() {
     printf '%s\n' \
         'Usage: ./scripts/run-container.sh [processes|pixels|console|scroll|uart|clock]' \
-        'Default: processes. Opens the original interface in a Xephyr window.' \
+        'Default: processes. Opens the graphical interface in a Xephyr window.' \
         'Requires Docker, xserver-xephyr, xauth and an X11 or XWayland session.' \
         'Ctrl+C stops QEMU and removes the temporary container and display credentials.'
 }
@@ -91,7 +91,7 @@ nested_display=$(cat "$session_dir/display")
 xauth -f "$session_auth" add ":$nested_display" MIT-MAGIC-COOKIE-1 "$cookie"
 unset cookie
 printf 'Demo: %s. The interface appears after compilation.\n' "$demo"
-printf 'The first run downloads the course image if it is not already installed.\n'
+printf 'The first run downloads the toolchain image if it is not already installed.\n'
 printf 'UART output appears in this terminal. Press Ctrl+C to stop.\n'
 
 # Only the isolated server's socket and newly created credential are mounted.

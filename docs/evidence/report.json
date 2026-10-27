@@ -1,5 +1,5 @@
 {
-  "generated_utc": "2026-10-27T13:26:28.970825+00:00",
+  "generated_utc": "2026-10-27T14:18:39.690179+00:00",
   "status": "PASS",
   "platform": "cep",
   "display_backend": "none",
@@ -17,8 +17,8 @@
     "src/crt0.S": "c5cfaff51509427012c152491cc2f6aebecf9d35c0258b7667d669bdbc9dd54b",
     "src/ctxt.S": "5eb6cb6733580d718fd18f857d4a6440f5d1b10ea599e2d7662e5b9a7aeb6231",
     "src/ctype.h": "3aece136fae5f1de6a28a973b0993920c63360c7633a442ba5a5ee72d7784f3e",
-    "src/demos.c": "b13fa167b8bf72cd1ed5a751423d0b6c7fa299e17591dd9a01b6454db61ef633",
-    "src/demos.h": "337da4d7c1ba72b8c6f34a22c7836caddca86d68e590c3bb3b3be5b973be6e08",
+    "src/demos.c": "d6850ed3072609ef3351b37227456483b195533e9dfab4cc5def108ac0649c18",
+    "src/demos.h": "104fe09bf844e15ff53aab3362d8b66ff945e1e7c5424ac8911508fdbb1fb486",
     "src/div64.h": "6a628aa1573ad7558e43f5d9c16676cf6b80ffbbe6de2720380703bbd23c4bec",
     "src/doprnt.c": "92b3baa16da9b82a747c263ee8fe9aaec7fc62800f15f88d60f248e30020bbce",
     "src/doprnt.h": "e23b55214fd1ac5caa6637039a6bad08d53c304332c1e34868debd3712a8a13b",
@@ -52,15 +52,15 @@
     {
       "mode": "pixels",
       "make": "make PLATFORM=cep DEMO=pixels SELFTEST=0 all",
-      "kernel_sha256": "6f2dbe8bc60fa78bd3c186fec41e45c311759bd391bff44872159c54779e13b2",
+      "kernel_sha256": "d6061767028898489acfb8787a3f0417144a3abae93b7400808752f54f7e816f",
       "uart_log": "pixels.txt",
-      "uart_sha256": "f8c58d525aa8b525cc26607444f38a2d11d8c99515dae33074aecbb4a2798a81",
+      "uart_sha256": "3fed05b9ab142dc0b00327dc957517ea432c92f346604defa1a4c1795dc47a2c",
       "captures": [
         {
           "file": "pixels.png",
           "trigger": "EVIDENCE: PIXELS PASS",
           "settle_seconds": 0,
-          "sha256": "774a726fe13a79bb007ccd309374410b155ed1fff77ab9d3e2417e45c4a53559"
+          "sha256": "fad55ef1861a54d53e2dbcea45eb883594835d01b213d956178d3b0725d7e26c"
         }
       ]
     },
@@ -147,5 +147,5 @@
     }
   ],
   "integration_test": "make DEMO=processes test: passed",
-  "selftest_sha256": "a3376735d5cae7c03dba253932bf20f10fedb63e5ff1a81cae561058bc34a693"
+  "selftest_sha256": "4fc4fefe9acc6e9f4a3e05f8370254b949b05b191dc3ea9a65690a4baf6d6ade"
 }

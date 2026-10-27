@@ -2,7 +2,7 @@
 
 Implementation: [uart.c](../src/uart.c), with hardware definitions in [cep_platform.h](../src/cep_platform.h).
 
-UART means *Universal Asynchronous Receiver/Transmitter*. Here the kernel writes device registers, and QEMU delivers the transmitted bytes to a terminal or file. The implemented direction is **TX**, transmission. RX definitions exist in the headers, but there is no working keyboard-input path in the recovered code.
+UART means *Universal Asynchronous Receiver/Transmitter*. Here the kernel writes device registers, and QEMU delivers the transmitted bytes to a terminal or file. The implemented direction is **TX**, transmission. RX definitions exist in the headers, but keyboard input is not implemented.
 
 ## Compare two output paths
 
@@ -38,7 +38,7 @@ CEP uses a SiFive-style UART at `0x10013000`. Its registers are 32-bit words:
 
 With a 32 MHz UART clock and 115200 baud, the integer divider is `32000000 / 115200 - 1 = 276`. This is the UART signaling rate, not the CPU frequency or the timer-interrupt rate. The register layout and divider agree with the [OpenSBI SiFive driver](https://github.com/riscv-software-src/opensbi/blob/master/lib/utils/serial/sifive-uart.c).
 
-`init_uart` sets the divider and enables TX. Recovery fixed the enable-register offset and added the explicit boot call.
+`kernel_start` calls `init_uart` before printing. Initialization writes the divider to `div` and enables transmission through `txctrl`.
 
 ## Sending a byte
 
@@ -61,4 +61,4 @@ To run the same CEP example without a window:
 sh scripts/course-env.sh make DEMO=uart run-serial
 ```
 
-The `virt` port uses a different device: an NS16550A at `0x10000000`, accessed as bytes. That backend was added during recovery. Neither backend implements keyboard input. The [inventory](01-inventory.md) explains the unfinished keyboard-related commit.
+The `virt` port uses a different device: an NS16550A at `0x10000000`, accessed as bytes. The build selects the driver for the chosen platform. Both backends implement transmission only.

@@ -1,54 +1,55 @@
 # OS — RISC-V
 
-A small operating system written in C and RISC-V assembly for the PCSEF / SEOC course at Ensimag in 2023.
+A small operating system written in C and RISC-V assembly. It runs on one emulated CPU in QEMU, with a graphical console, UART output, timer interrupts and a round-robin scheduler.
 
-The original **QEMU CEP graphical console** has a 1280 × 720 framebuffer, an 8 × 8 font, a clock and a process-state display. The kernel also implements UART output, timer interrupts, round-robin scheduling, sleep and process termination.
+**[Read the tutorials and explore the interactive diagrams](https://raiagues.github.io/OS/)**
 
-[Tutorials, QEMU captures and interactive diagrams](https://raiagues.github.io/OS/)
+The graphical display uses a 1280 × 720 framebuffer and an 8 × 8 bitmap font. Three processes run alongside `idle`, each with its own stack, sleep deadline and saved registers.
 
 ## Run
 
-With the course tools installed:
+On Linux/amd64 with Docker, Xephyr and xauth installed:
 
 ```sh
-./run.sh
+git clone https://github.com/Raiagues/OS.git
+cd OS
+./scripts/run-container.sh
 ```
 
-Three processes sleep for 2, 3 and 4 seconds, twice each, then terminate. `idle` keeps running and the clock continues. Close the QEMU window to exit.
+The launcher opens the QEMU graphical window. Three processes sleep for 2, 3 and 4 seconds, twice each, then terminate. `idle` keeps running and the clock continues. Close the window to exit.
 
-For a fresh setup, see **[Run and verify](docs/08-run-and-verify.md)**. It covers the course tools, a Docker environment with graphical output, and the serial-only alternative using standard QEMU packages.
+**[Installation and first run](docs/08-run-and-verify.md)** explains the dependencies, Docker setup, local CEP tools and standard-QEMU serial mode. With CEP tools installed locally, use `./run.sh`.
 
-## Small examples
-
-These examples use the kernel's existing functions, with ordinary text and pixels:
+## Try each feature
 
 ```sh
-./run.sh DEMO=pixels    # Four colored ASCII rows and a long wrapping paragraph
-./run.sh DEMO=console   # Newline, tab, backspace, carriage return and clear
-./run.sh DEMO=scroll    # Write more lines than fit on screen
-./run.sh DEMO=uart      # Direct UART output and console output
-./run.sh DEMO=clock     # Run the clock with idle only
+./scripts/run-container.sh pixels    # Four static colored ASCII rows and automatic wrapping
+./scripts/run-container.sh console   # Newline, tab, backspace, carriage return and clear
+./scripts/run-container.sh scroll    # Write more lines than fit on screen
+./scripts/run-container.sh uart      # Direct UART output and console output
+./scripts/run-container.sh clock     # Run the clock with idle only
 ```
 
-The examples are in [demos.c](src/demos.c). They were added to make the original features easy to run separately. The default process demonstration is in [test_student.c](src/test_student.c).
+With local CEP tools, the equivalent is `./run.sh DEMO=pixels`, and so on. The small examples call kernel functions directly in [demos.c](src/demos.c); the [process example](src/test_student.c) exercises scheduling, sleep and termination.
 
-## How it works
+## Understand the implementation
 
-Start with the **[guide](docs/README.md)**: QEMU and RISC-V, boot, pixels, UART, interrupts and processes. Each chapter points to the implementation, gives a small experiment and includes actual output.
+Follow the **[project guide](docs/README.md)** to trace boot, pixel rendering, console output, UART, interrupts and context switching. Each chapter links to the code, explains the design and gives commands with expected results. The [implementation walkthrough](docs/09-development.md) connects these pieces step by step.
 
-The [inventory](docs/01-inventory.md) records the review of five local project copies and 62 commits. UART transmission and the process features were present. No working keyboard input was found; the keyboard-related commit contains an unfinished external-interrupt handler.
+The site includes actual QEMU screenshots, UART logs and interactive models of bitmap rendering and task scheduling. Keyboard input and a command shell are not implemented. Tasks share kernel memory and machine-mode privileges.
 
-## Tests
+## Verify
+
+With the RISC-V compiler and standard QEMU installed:
 
 ```sh
-sh scripts/course-env.sh make test
-sh scripts/course-env.sh python3 scripts/capture_evidence.py
+make test
 ```
 
-The first command tests boot, sleep, termination, preemption and formatting bounds. The second runs the CEP examples and saves real framebuffer captures and UART logs in `build/evidence/`. [Recorded evidence](docs/evidence/) is included in the repository. GitHub Actions runs both toolchain and CEP checks.
+This checks boot, sleep, termination, preemption and formatting bounds. The [capture instructions](docs/08-run-and-verify.md#capture-the-real-framebuffer) show how to save QEMU framebuffer images and UART logs. [Sample output](docs/evidence/) is included, and GitHub Actions runs the kernel tests and CEP captures.
 
 ## Credits
 
-Student implementation by **Emilly Raiane Rodrigues**, based on the course framework. Original French API names and historical process messages are retained. Documentation, new examples and test diagnostics are in English.
+Developed by **Emilly Raiane Rodrigues**. Boot and platform support are based on code by Sébastien Viardot.
 
-Support code includes Flux/OSKit, CMU/Mach, klibc and bitmap-font credits to Daniel Hepper, Marcel Sondaar and IBM. Original notices remain in the source; [COPYING.GPL-2](COPYING.GPL-2) accompanies the components referring to it.
+Support code includes Flux/OSKit, CMU/Mach and klibc; bitmap-font credits include Daniel Hepper, Marcel Sondaar and IBM. Attribution and license notices remain in the source. [COPYING.GPL-2](COPYING.GPL-2) accompanies the components referring to it.

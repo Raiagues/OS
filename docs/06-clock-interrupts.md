@@ -123,4 +123,4 @@ Expect **`mcause = 0x8000000000000007`** and timer enable bit `mie & 0x80`. `mep
 
 The [recorded session](evidence/timer-gdb.txt) shows the first interrupt before rearming the comparison. GDB pauses execution, so use this inspection to understand register state, not to measure normal timing accuracy.
 
-The clock output demonstrates progression; the [busy-loop preemption test](07-processes.md#prove-preemption) demonstrates that another task can run without the active task yielding. The original project already contained the timer and scheduler connection; RV64 cause handling and interrupt-state preservation were corrected during recovery.
+The clock output demonstrates progression; the [busy-loop preemption test](07-processes.md#prove-preemption) demonstrates that another task can run without the active task yielding.

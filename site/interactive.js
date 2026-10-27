@@ -72,7 +72,7 @@
         return;
       }
       status.textContent = `Character ${character === " " ? "space" : character}: ASCII ${code} (${hex(code)}). ` +
-        `${select.options[select.selectedIndex].text} ink; the original size is 8 × 8 pixels.`;
+        `${select.options[select.selectedIndex].text} ink; each character occupies 8 × 8 pixels.`;
       buttons.forEach((button, index) => {
         const x = index % 8, y = Math.floor(index / 8), on = (glyph[y] >> x) & 1;
         button.dataset.on = String(Boolean(on));

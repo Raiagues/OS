@@ -1,5 +1,5 @@
 #!/bin/sh
-# Open the graphical console developed for the original CEP platform.
+# Open the graphical console on the CEP platform.
 set -eu
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$repo_dir"
@@ -15,7 +15,7 @@ if command -v "$qemu" >/dev/null 2>&1 && \
     exec make PLATFORM=cep run "$@"
 fi
 printf '%s\n' \
-  'The graphical interface needs the course QEMU with the cep machine.' \
+  'The graphical interface needs the custom QEMU build with the cep machine.' \
   'The standard Ubuntu QEMU packages do not include that machine.' \
   'Set your tool directory: COURSE_TOOLS=/path/to/xinul ./run.sh' >&2
 exit 1

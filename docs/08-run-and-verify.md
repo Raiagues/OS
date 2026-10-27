@@ -1,6 +1,6 @@
 # 8. Run and verify
 
-Run commands from the repository root. The graphical interface needs the course QEMU with its **CEP** machine. Standard distribution QEMU provides the separate `virt` serial backend.
+Run commands from the repository root. Choose **CEP** for the graphical window or **`virt`** for a terminal-only run with standard QEMU. The Docker launcher includes the compiler and custom QEMU build needed by CEP.
 
 ## Get the source
 
@@ -13,30 +13,9 @@ git clone https://github.com/Raiagues/OS.git
 cd OS
 ```
 
-Choose one of the following environments.
+For the graphical display on a new Linux setup, follow the Docker steps below. The other options use tools installed directly on the host.
 
-## Course tools already installed
-
-The default location is `/matieres/4MMPCSEA/xinul`. With `make` and Python installed:
-
-```sh
-sudo apt-get install -y make python3
-sh scripts/course-env.sh make check
-./run.sh
-```
-
-For another location:
-
-```sh
-export COURSE_TOOLS=/path/to/xinul
-./run.sh
-```
-
-That directory must contain `bin/riscv64-unknown-elf-gcc` and `bin/qemu-system-riscv64`. The wrapper selects the historical `rv64ima` toolchain. It keeps temporary files in `build/tmp` unless `TMPDIR` is already set, and prepares local `libaio` compatibility when needed on Ubuntu 24.04 x86-64.
-
-Close the QEMU window to stop. The process example finishes after roughly eight kernel seconds, but `idle` and the clock keep running.
-
-## Course environment in Docker
+## Graphical run with Docker
 
 This path uses Linux/amd64 and an X11 or XWayland desktop. Install Docker following its [Ubuntu instructions](https://docs.docker.com/engine/install/ubuntu/) and confirm that `docker info` works for your user. Then:
 
@@ -45,7 +24,7 @@ sudo apt-get install -y xserver-xephyr xauth
 ./scripts/run-container.sh
 ```
 
-The script downloads a pinned copy of the course image if necessary. It contains Debian 11, GCC 11.1.0, QEMU 6.2.50 and Python 3.9.2. Allow approximately 700 MB for the download and 2 GB for the unpacked image.
+The script downloads a pinned toolchain image if necessary. It contains Debian 11, GCC 11.1.0, QEMU 6.2.50 and Python 3.9.2. Allow approximately 700 MB for the download and 2 GB for the unpacked image.
 
 Xephyr gives the container its own graphical window and temporary display credential. The container does not receive the main desktop credential. Builds go into `build/container/`; closing the window or pressing Ctrl+C stops the temporary container.
 
@@ -59,7 +38,7 @@ Select an example by name:
 ./scripts/run-container.sh clock
 ```
 
-The launcher was tested on Linux/amd64. Windows and macOS were not tested. Keep free space in `/tmp` for Xephyr's keyboard cache; on the recovery computer, its cache had to be redirected for the GUI check because that partition was full.
+The launcher was tested on Linux/amd64. Windows and macOS were not tested. Xephyr needs free space in `/tmp` for its keyboard cache.
 
 ## Standard QEMU, serial output
 
@@ -74,7 +53,31 @@ make PLATFORM=virt run
 
 Exit with **Ctrl+A**, then **X**. This recompiles for the `virt` memory map and UART. It does not implement the CEP graphical console. The pixel, console and scrolling examples require CEP.
 
+## Local CEP toolchain
+
+If you have the CEP compiler and QEMU installed directly, install the host tools:
+
+```sh
+sudo apt-get install -y make python3
+```
+
+Point the launcher at the toolchain directory when it is outside its default location. For example:
+
+```sh
+export COURSE_TOOLS=/opt/cep
+sh scripts/course-env.sh make check
+./run.sh
+```
+
+Replace `/opt/cep` with the directory containing `bin/riscv64-unknown-elf-gcc` and `bin/qemu-system-riscv64`. `COURSE_TOOLS` is the environment variable accepted by the launcher. If the launcher already finds both tools, you can omit the export.
+
+The wrapper selects `rv64ima` for GCC 11, keeps temporary files in `build/tmp` unless `TMPDIR` is set, and prepares local `libaio` compatibility when needed on Ubuntu 24.04 x86-64.
+
+Close the QEMU window to stop. The process example finishes after roughly eight kernel seconds, but `idle` and the clock keep running.
+
 ## What to run and observe
+
+The commands below use local CEP tools. With Docker, use `./scripts/run-container.sh pixels`, `console`, `scroll`, `uart` or `clock`; omit the name for the process demo.
 
 | Local command | Expected result | Recorded output |
 | --- | --- | --- |
@@ -87,9 +90,19 @@ Exit with **Ctrl+A**, then **X**. This recompiles for the `virt` memory map and 
 
 `DEMO` is a build option, not a command typed inside the kernel. Executables have separate directories, such as `build/cep-pixels/kernel.elf`. Static examples remain open until you close QEMU.
 
+## Optional debugger
+
+The boot, timer and process chapters use GDB to inspect registers and memory. Install it on the host:
+
+```sh
+sudo apt-get install -y gdb-multiarch
+```
+
+Those examples use the local CEP toolchain and `make debug`, which starts QEMU paused and listens on port 1234.
+
 ## Integration tests
 
-With course tools:
+With the local CEP toolchain:
 
 ```sh
 sh scripts/course-env.sh make test
@@ -107,7 +120,7 @@ The final QEMU `terminating on signal 15` line comes from the test script stoppi
 sh scripts/course-env.sh python3 scripts/capture_evidence.py
 ```
 
-Add `--display sdl` to watch the windows. Without local course tools, the same capture works in Docker without a desktop:
+Add `--display sdl` to watch the windows. The same capture works in Docker without a desktop:
 
 ```sh
 docker run --rm --platform linux/amd64 --ulimit core=0 \
@@ -129,18 +142,18 @@ The report records versions, source hashes, ELF hashes, capture triggers and out
 
 To update the committed samples after a code change, run the capture with `--output docs/evidence`. ELF and GDB records are produced separately using the commands in the [boot](03-boot-kernel.md), [clock](06-clock-interrupts.md) and [process](07-processes.md) chapters.
 
-Screenshots show the display at particular moments. UART logs show transmitted bytes. The integration test checks preemption, sleep and exit. These are different observations: a screenshot alone cannot prove scheduling correctness or precise timing. The small guest examples intentionally stay close to the original code.
+Screenshots show the display at particular moments. UART logs show transmitted bytes. The integration test checks preemption, sleep and exit. These are different observations: a screenshot alone cannot prove scheduling correctness or precise timing. Each small example calls the corresponding kernel functions directly.
 
 ## Troubleshooting
 
 | Symptom | Check |
 | --- | --- |
-| `unsupported machine type: cep` | Use the course QEMU or the Docker launcher |
+| `unsupported machine type: cep` | Use the custom CEP QEMU build or the Docker launcher |
 | Output only in the terminal | `virt` and `run-serial` are serial modes; use CEP for graphics |
 | Xephyr cannot open | Check the desktop session, `DISPLAY`, installed dependencies and free space in `/tmp` |
 | Docker is inaccessible | Check the service, context and user access with `docker info` |
-| CSR assembler errors | Use `rv64ima` for the historical compiler, `rv64ima_zicsr` for modern packages |
-| Typing does nothing | There is no working keyboard driver or shell in the recovered project |
+| CSR assembler errors | Use `rv64ima` for GCC 11, `rv64ima_zicsr` for modern packages |
+| Typing does nothing | The kernel does not implement keyboard input or a shell |
 | GDB says `optimized out` | Rebuild with `OPT=-O0` and debug that ELF |
 
-GitHub Actions tests the modern `virt` build, compiles all CEP examples and captures them with the pinned course image. Its `cep-framebuffer-evidence` artifact contains the generated output.
+GitHub Actions tests the modern `virt` build, compiles all CEP examples and captures them with the pinned toolchain image. Its `cep-framebuffer-evidence` artifact contains the generated output.

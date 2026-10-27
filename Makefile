@@ -105,7 +105,7 @@ rung: $(KERNEL)
 ifeq ($(PLATFORM),cep)
 	$(QEMU) $(QEMUFLAGS) -name "OS - graphical console" -serial mon:stdio -display sdl,show-cursor=on
 else
-	@printf '%s\n' 'The virt backend uses a terminal. Run make run, or select PLATFORM=cep with the course QEMU.'
+	@printf '%s\n' 'The virt backend uses a terminal. Run make run, or select PLATFORM=cep with CEP QEMU.'
 	@exit 1
 endif
 
@@ -121,15 +121,15 @@ clean:
 help:
 	@printf '%s\n' \
 	  'make check     Check the compiler, QEMU and Python' \
-	  './run.sh       Open the original CEP graphical interface' \
-	  './run.sh DEMO=pixels    Run a teaching demo (pixels/console/scroll/uart/clock)' \
-	  'make           Build build/cep/kernel.elf (course toolchain required)' \
+	  './run.sh       Open the CEP graphical interface' \
+	  './run.sh DEMO=pixels    Run a small demo (pixels/console/scroll/uart/clock)' \
+	  'make           Build build/cep/kernel.elf (CEP toolchain required)' \
 	  'make run       Open the CEP graphical window' \
 	  'make PLATFORM=virt run   Optional serial mode with upstream QEMU' \
 	  'make run-serial          CEP serial output without a window' \
 	  'make test      Check boot, sleep, termination and timer preemption' \
 	  'make debug     Start halted; GDB listens on 127.0.0.1:1234' \
-	  'make PLATFORM=cep rung   Graphical mode with the custom course QEMU' \
+	  'make PLATFORM=cep rung   Graphical mode with the custom CEP QEMU' \
 	  'make clean     Remove generated build files' \
 	  'Overrides: CROSS_COMPILE=... QEMU=... RISCV_ARCH=... OPT=-O0'
 

@@ -43,7 +43,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Execute the original CEP machine and capture its framebuffer
+      - name: Run CEP demonstrations and capture the framebuffer
         run: |
           docker run --rm --platform linux/amd64 --ulimit core=0 \
             --tmpfs /tmp:rw,size=64m \

@@ -1,91 +1,119 @@
-# 9. How the kernel was built
+# 9. Build the kernel step by step
 
-The project grew from a supplied boot framework into a graphical console and a small multitasking kernel. This timeline follows the original 2023 Git history described in the [inventory](01-inventory.md). Commit IDs below refer to those local historical repositories, not commits in this recovered repository.
-
-The commands reproduce each mechanism with the **current** code. The separate `DEMO` examples and screenshots were added during recovery; they are not the original course tests.
+Work through the implementation from the first instruction to a complete task lifecycle. Each step introduces a mechanism, identifies its source files and gives a way to inspect it. Run the commands from the repository root with the [local CEP toolchain configured](08-run-and-verify.md#local-cep-toolchain). To run the graphical examples with Docker instead, use `./scripts/run-container.sh` followed by the demo name.
 
 ```mermaid
 flowchart LR
-    B["Boot framework"] --> P["Pixels and characters"]
-    P --> C["Console and UART"]
-    C --> T["Timer and traps"]
-    T --> S["Task table and context switch"]
-    S --> W["Sleep and wakeup"]
-    W --> E["Explicit and implicit exit"]
+    B["Boot into C"] --> P["Draw pixels and font bits"]
+    P --> C["Build a console and UART output"]
+    C --> T["Handle timer interrupts"]
+    T --> S["Create tasks and switch contexts"]
+    S --> W["Sleep, wake and exit"]
+    W --> V["Verify output and preemption"]
 ```
 
-## September 24, 2023: start from the framework
+## 1. Establish memory and enter C
 
-Sébastien Viardot's starting commit, `352e9f4`, supplied boot assembly, linker setup, device definitions, a bitmap font and support routines. This let the student work build on a known machine layout.
+The [Makefile](../Makefile) compiles C and assembly into an ELF executable. [kernel.lds](../src/kernel.lds) places code, constants, initialized data and `.bss` at the selected platform's addresses. On CEP, the entry point is `0x1000`.
 
-Follow [the boot chapter](03-boot-kernel.md): compile an ELF, inspect its entry address, then stop in `kernel_start` with GDB. Assembly prepares the machine state needed by C. Later, assembly also handles trap entry and context switching; C implements most device and scheduling logic.
+```sh
+sh scripts/course-env.sh make
+sh scripts/course-env.sh sh -c '"${CROSS_COMPILE}readelf" -h -l build/cep/kernel.elf'
+```
 
-## October 15: turn pixel writes into a console
+Read [crt0.S](../src/crt0.S) from `entry`: disable interrupts, select hart 0, initialize `gp`, put `sp` at the top of the boot stack, clear `.bss`, then call `kernel_start`. This order gives C a valid stack and initialized globals before device or task code runs.
 
-Console work is visible in `41c8046`. The implementation builds several small operations on one another: `pixel` writes a color to video memory; `ecrit_car` reads bits from the supplied 8 × 8 font; cursor helpers position text; `traite_car` handles control bytes; `defilement` moves rows when the screen fills.
+Check the ELF's entry address, then follow the [boot GDB session](03-boot-kernel.md) to stop in C and inspect `sp` and `gp`. Compare with the recorded [ELF headers](evidence/elf.txt) and [GDB output](evidence/boot-gdb.txt).
 
-Run these in order, closing QEMU between examples:
+## 2. Write pixels, then characters
+
+A framebuffer is memory that the display device reads as pixels. In [console.c](../src/console.c), `pixel` checks coordinates and writes a 32-bit color at:
+
+```text
+0x80000000 + 4 * (y * 1280 + x)
+```
+
+The `volatile` pointer makes each device write observable. `ecrit_car` adds one layer: it reads eight rows of font bits from [font.c](../src/font.c) and lights the corresponding pixels. An 8 × 8 font gives 160 text columns across the screen.
 
 ```sh
 ./run.sh DEMO=pixels
-./run.sh DEMO=console
-./run.sh DEMO=scroll
 ```
 
-![Printable ASCII and automatic text wrapping](evidence/pixels.png)
+![Four colored ASCII rows followed by automatically wrapped text](evidence/pixels.png)
 
-In the pixel example, four colored rows expose the font's printable characters. A long string then exercises automatic wrapping through the original console API. Trace one character from `console_putbytes` to its framebuffer address in [Pixels and console](04-pixels-console.md), then compare the [control-character](evidence/console.png) and [scrolling](evidence/scroll.png) captures.
+The static example draws printable ASCII in red, green, blue and white, then sends one long paragraph without newline bytes through `console_putbytes`. Follow the transition at column 159: the next character starts a new row. Wrapping is by character, so words can split across rows. [Pixels and console](04-pixels-console.md) traces the bitmap and address calculations.
 
-## October 29: add serial output and timer interrupts
+## 3. Turn character drawing into output
 
-Commit `4dddfe8` introduces UART transmission and timer work. Both use memory-mapped device registers: writing the UART transmit register sends a byte; writing `mtimecmp` sets the next timer deadline. CPU control registers install and enable the interrupt handler.
+Drawing a glyph alone does not decide where the next glyph belongs. `traite_car` maintains cursor position, interprets control bytes and advances after printable characters. `defilement` uses `memmove` because the source and destination overlap when rows move upward. Row 0 remains reserved for the clock and task states.
 
 ```sh
+./run.sh DEMO=console
+./run.sh DEMO=scroll
 ./run.sh DEMO=uart
+```
+
+Close QEMU between examples. Compare the [control-character capture](evidence/console.png), [scrolling capture](evidence/scroll.png) and [UART log](evidence/uart.txt).
+
+[uart.c](../src/uart.c) polls the transmitter until it has room, then writes a byte to its memory-mapped register. On CEP, `console_putbytes` calls both the graphical character path and UART transmission. Direct `traite_car_uart` output reaches only the serial backend. This separation lets one string appear in a window and a host log without treating the UART as a graphics device. See [UART](05-uart.md).
+
+## 4. Make time advance through interrupts
+
+[time.c](../src/time.c) sets `mtimecmp = mtime + TIMER_FREQ / ITFREQ`. With a 10 MHz timer and `ITFREQ = 20`, each deadline is nominally 500,000 increments, or 50 ms, away. This is the timer's frequency, not the CPU instruction frequency.
+
+Install [mon_traitant](../src/traitant.S) in `mtvec`, prepare the task table, then program and enable the timer. The table must exist because the C handler calls the scheduler. On each interrupt, assembly preserves registers, C updates the tick count and schedules, and `mret` eventually resumes interrupted execution.
+
+```sh
 ./run.sh DEMO=clock
 ```
 
-The first example separates direct serial output from output mirrored to the screen. The second runs the clock with only `idle`. Follow [UART](05-uart.md) for the transmit path and [Clock and interrupts](06-clock-interrupts.md) for the path through assembly, the C handler and back to interrupted execution.
+![Clock updated by timer interrupts](evidence/clock.png)
 
-![Clock driven by timer interrupts](evidence/clock.png)
+The demo uses only `idle`. Read [Clock and interrupts](06-clock-interrupts.md) to inspect `mcause`, `mepc`, `mie` and the timer registers in GDB. The handler redraws the clock every 20 ticks but calls the scheduler on every tick.
 
-The 10 MHz timer counter and the kernel's nominal 20 interrupts per second are different quantities. Counting handled interrupts produces whole seconds; the same interrupt path provides scheduling opportunities.
+## 5. Give each task a resumable context
 
-## November 26: preserve one task while another runs
+[processus.h](../src/processus.h) stores a PID, name, state, 18 saved registers and stack storage per task. `cree_processus` in [processus.c](../src/processus.c) prepares the stack pointer and a return address pointing to `proc_launcher`; creation makes a task ready rather than calling it immediately.
 
-`0df81eb` adds process creation and identity; `1b2c495` adds assembly context-switch work. A task needs more than a function pointer: its record holds a state, saved registers and a separate stack. `ctx_sw` saves one continuation and restores another.
+[ctx_sw](../src/ctxt.S) saves the current context and loads the next one. Its final `ret` uses the newly loaded stack and return address. The stack's bytes stay in memory; the saved `sp` lets the task find its suspended calls again. For timer-driven switching, the assembly trap handler also holds a 128-byte interrupt frame on that stack.
 
-The final scheduler, `ordonnance`, visits ready tasks in circular order. Timer interrupts can invoke it even when a task does not yield. Read [Processes](07-processes.md) alongside [processus.c](../src/processus.c) and [ctxt.S](../src/ctxt.S): follow the saved `sp`, then identify which task's return address `ret` uses.
+```mermaid
+sequenceDiagram
+    participant A as Task A
+    participant S as Scheduler and ctx_sw
+    participant B as Task B
+    A->>S: Interrupt or voluntary yield
+    S->>S: Save A's registers and stack pointer
+    S->>B: Restore B and return on B's stack
+    B->>S: Later scheduling opportunity
+    S->>A: Restore A and resume its suspended call
+```
 
-The implementation uses a fixed table containing `idle` and three other tasks. They share memory and machine-mode privileges; a context switch does not create an isolated address space.
+`ordonnance` searches the fixed table circularly, selecting `RUNNABLE` tasks and skipping sleeping or finished entries. Interrupts are disabled while shared scheduling state and the active stack change. This protects the single-hart implementation; tasks still share memory and machine-mode privileges.
 
-## December 2–3: let tasks wait and expose their states
+## 6. Add waiting and termination
 
-`663e39f` on December 2 adds `dors`; `71e8380` on December 3 includes the process-state display. Sleeping records a deadline, changes the task to `WAIT`, and gives the CPU to another task. The scheduler changes it back to `RUNNABLE` when the deadline is reached.
+`dors(n)` stores a whole-second wakeup deadline, changes the task to `WAIT`, then schedules. The scheduler makes it `RUNNABLE` when the deadline is reached. Its context remains available for resumption. `dors(0)` yields without sleeping.
+
+`fin_processus` instead sets `DIE` and schedules away permanently. `proc_launcher` calls it when a task function returns, so explicit exit and ordinary function return share the same termination path. There is no dynamic stack deallocation or reuse of dead slots.
 
 ```sh
 ./run.sh
 ```
 
-Watch `proc1`, `proc2` and `proc3` sleep for 2, 3 and 4 seconds, twice each. Compare the displayed state digits with the [serial timestamps](evidence/processes.txt). The whole-second clock limits sleep precision; the clock chapter explains the rounding.
+The three tasks sleep for 2, 3 and 4 kernel seconds, twice each. Compare their [serial timestamps](evidence/processes.txt) with the state panel: `RUN = 0`, `RUNNABLE = 1`, `WAIT = 2`, `DIE = 3`.
 
-## December 14: finish the task lifecycle
+![All three tasks finished while idle and the clock continue](evidence/processes-end.png)
 
-`2a88ec3` adds implicit termination: `proc_launcher` calls the task function and routes its return to `fin_processus`. Thus `proc1` and `proc3` can return normally, while `proc2` calls the exit function explicitly. Finished tasks become `DIE`; their slots are not recycled.
+After termination, `idle` remains active. See [Processes](07-processes.md) for the context layout, state transitions and GDB commands. Whole-second deadlines limit sleep precision; reaching a deadline also does not guarantee immediate selection by the scheduler.
 
-![All three tasks finished; idle remains active](evidence/processes-end.png)
-
-The same day's keyboard-related commit, `6e90127`, contains an unfinished external-interrupt handler. The final commit, `3a1eac9`, adjusts timer/trap code. The [audit](01-inventory.md#the-keyboard-commit) found no working keyboard input path, so transmission and task management should not be mistaken for an interactive shell.
-
-## 2026 recovery: make the result reproducible
-
-Recovery kept these mechanisms and corrected startup initialization, task-table bounds, stack alignment, interrupt-state preservation, RV64 trap decoding and console bounds. The `virt` serial port, environment launchers, individual examples and automated checks were added separately.
+## 7. Verify the mechanisms separately
 
 ```sh
 sh scripts/course-env.sh make test
 sh scripts/course-env.sh python3 scripts/capture_evidence.py
 ```
 
-The tests check behavior, including preemption of a busy-looping task; the capture script reads actual CEP video memory and saves PNGs and UART logs. Use the [self-test log](evidence/selftest.txt) for scheduling checks and [capture report](evidence/report.json) for versions and hashes. The screenshots above show the recovered code running, not an archived 2023 execution.
+A demo that calls `dors` can progress by voluntarily yielding, so the integration test also uses a busy-looping task. Another task must execute while that loop runs, establishing timer preemption. The test checks sleep, exit and formatting bounds as well; inspect the [self-test log](evidence/selftest.txt).
 
-Continue with [Run and verify](08-run-and-verify.md) to reproduce the environment and collect your own evidence.
+The capture script pauses QEMU, reads the actual framebuffer, writes PNGs, and saves UART logs. The [report](evidence/report.json) records versions and hashes. Screenshots validate visible output; logs and debugger state answer different questions about execution. Follow [Run and verify](08-run-and-verify.md) to collect your own results.

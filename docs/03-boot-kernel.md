@@ -21,7 +21,7 @@ flowchart LR
     A --> C["kernel_start: C"]
 ```
 
-**ELF** stores code, data, load addresses and symbols. Symbols let GDB identify functions such as `kernel_start`. The historical file named `kernel.bin` was also an ELF executable; its extension did not make it a raw binary.
+**ELF** stores code, data, load addresses and symbols. Symbols let GDB identify functions such as `kernel_start`.
 
 Expect `ELF64`, little-endian data, machine `RISC-V`, and entry point **`0x1000`**. The program headers contain three `LOAD` segments, with `R E`, `R` and `RW` permissions. Sizes vary with compiler and demo selection. See the [recorded ELF headers](evidence/elf.txt).
 
@@ -103,6 +103,6 @@ The [recorded GDB session](evidence/boot-gdb.txt) uses the same `-S` behavior wi
 
 At `-O2`, some C variables may be optimized out. For a study session, use `OPT=-O0` consistently when rebuilding and launching.
 
-ELF inspection checks the executable layout; GDB checks entry into C and register state. The current startup adds explicit `.bss` clearing, `gp` setup and segment separation to the original structure; the [inventory](01-inventory.md) records the changes.
+ELF inspection checks the executable layout; GDB checks entry into C and register state. Clearing `.bss` gives global variables their initial zero values; setting `gp` prepares global-data access; the linker groups code, constants and writable data into separate segments.
 
 Continue with [timer interrupts](06-clock-interrupts.md) or [processes](07-processes.md).

@@ -1,4 +1,4 @@
-/* Small examples of the existing kernel APIs, added for the documentation.
+/* Small examples of the kernel APIs.
  * EVIDENCE messages mark capture points; validation is done by the host script. */
 #include "demos.h"
 #include "console.h"
@@ -15,8 +15,8 @@ static __attribute__((unused)) void serial_text(const char *text)
 }
 
 #if defined(DEMO_PIXELS)
-/* The original ecrit_car draws white; the same bits can be sent to pixel
- * with another color. Every character stays at its original 8x8 size. */
+/* ecrit_car draws white; the same bits can be sent to pixel with another color.
+ * Every character uses the font's 8x8 size. */
 static void color_text(uint32_t row, const char *text, uint32_t color)
 {
     for (uint32_t col = 0; text[col]; ++col) {
@@ -49,7 +49,7 @@ void demo_run(void)
 
     /* Adjacent C strings form one paragraph: there are no newline bytes. */
     static const char long_text[] =
-        "This is one long paragraph sent to the original console without any newline characters. "
+        "This is one long paragraph sent to the kernel's console without any newline characters. "
         "The text should reach the right edge, continue on the next line, and keep every character in order. "
         "Each character occupies eight pixels horizontally and eight pixels vertically. "
         "A 1280-pixel-wide display therefore has room for 160 characters on each text line. "

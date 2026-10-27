@@ -1,6 +1,6 @@
 # 7. Processes: create, switch, sleep and exit
 
-Three C functions take turns on one hart. Each keeps its own stack and continuation point; the scheduler chooses which receives the CPU. The course calls these tasks **processes**, but they share kernel memory and M-mode privileges. There is no process isolation or system-call boundary.
+Three C functions take turns on one hart. Each keeps its own stack and continuation point; the scheduler chooses which receives the CPU. These **kernel processes** share memory and M-mode privileges. There is no process isolation or system-call boundary.
 
 ## Run the complete demo
 
@@ -12,7 +12,7 @@ Three C functions take turns on one hart. Each keeps its own stack and continuat
 
 ![Process demo after all three tasks finish](evidence/processes-end.png)
 
-Use the [serial log](evidence/processes.txt) to follow events between these captures. [test_student.c](../src/test_student.c) defines:
+Use the [serial log](evidence/processes.txt) to follow events between these captures. The [process demonstration](../src/test_student.c) defines:
 
 | Task | PID | Work | Exit path |
 | --- | --- | --- | --- |
@@ -181,4 +181,4 @@ At the first scheduler call, expect four tasks, active PID 0, and `proc1` ready 
 
 After a task has executed, its saved `sp` generally lies below the stack's top because of function calls and interrupt frames. Compare its state and deadline with the sleep messages.
 
-The fixed table and circular policy make this implementation easy to inspect. Its limits are concrete: no priorities, slot reuse, memory isolation or stack-overflow checks. The [inventory](01-inventory.md) separates the original functionality from fixes to initialization, alignment and interrupt-state preservation.
+The fixed table and circular policy make this implementation easy to inspect. Its limits are concrete: no priorities, slot reuse, memory isolation or stack-overflow checks. See the [kernel overview](01-inventory.md) for the complete feature map.

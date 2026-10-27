@@ -11,11 +11,11 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'build/site'
 REPO = 'https://github.com/Raiagues/OS'
 CHAPTERS = [
-    ('01-inventory', 'Feature inventory'), ('02-qemu-riscv', 'QEMU and RISC-V'),
+    ('01-inventory', 'Kernel overview'), ('02-qemu-riscv', 'QEMU and RISC-V'),
     ('03-boot-kernel', 'Boot and kernel'), ('04-pixels-console', 'Pixels and console'),
     ('05-uart', 'UART output'), ('06-clock-interrupts', 'Clock and interrupts'),
     ('07-processes', 'Processes'), ('08-run-and-verify', 'Run and verify'),
-    ('09-development', 'Development history'),
+    ('09-development', 'Build it step by step'),
 ]
 CAPTURES = [
     ('pixels', 'Characters, colors and wrapping', 'All printable ASCII characters in four static colors, followed by a long paragraph.', 'pixels'),
@@ -40,8 +40,8 @@ def page(title, content, current='index'):
 <div class="top-links"><a href="{REPO}">Source on GitHub ↗</a><button id="nav-toggle" aria-expanded="false" aria-controls="navigation">Chapters</button></div></header>
 <div class="layout"><aside id="navigation"><nav aria-label="Project guide"><a class="nav-home" href="index.html"{' aria-current="page"' if current == 'index' else ''}>Overview</a>
 <p class="nav-label">TUTORIALS</p>{links}<p class="nav-label">EXPLORE</p><a href="index.html#captures">QEMU captures</a><a href="index.html#interactive">Interactive diagrams</a></nav>
-<div class="sidebar-note">C + RISC-V assembly<br>One hart · Machine mode<br>Ensimag · 2023</div></aside>
-<main id="content">{content}<footer>Emilly Raiane Rodrigues · PCSEF / SEOC<br><a href="{REPO}">Source, original credits and license notices</a></footer></main></div>
+<div class="sidebar-note">C + RISC-V assembly<br>One hart · Machine mode<br>Framebuffer · UART · CLINT</div></aside>
+<main id="content">{content}<footer>RISC-V OS · Emilly Raiane Rodrigues<br><a href="{REPO}">Source code, credits and license notices</a></footer></main></div>
 <dialog id="image-viewer" aria-labelledby="image-title"><div class="viewer-controls"><strong id="image-title">QEMU capture</strong><button data-image-scale="fit">Fit</button><button data-image-scale="1">100%</button><button data-image-scale="2">200%</button><button id="close-image" aria-label="Close image">Close ×</button></div><div class="image-pan"><img id="full-image" alt=""></div></dialog>
 </body></html>'''
 
@@ -51,10 +51,10 @@ def home():
                     for name, title, description, log in CAPTURES)
     lessons = ''.join(f'<a class="lesson-link" href="{slug}.html"><span>{i:02d}</span><strong>{title}</strong><span aria-hidden="true">→</span></a>'
                       for i, (slug, title) in enumerate(CHAPTERS, 1))
-    return f'''<section class="intro"><p class="eyebrow">PCSEF / SEOC · ENSIMAG · 2023</p><h1>A small RISC-V kernel.</h1><p class="lead">Read the code. Run it in QEMU. Follow a character into the framebuffer, and a timer interrupt into the scheduler.</p><p>This project implements a graphical console, UART output, a clock and four kernel tasks on a single RISC-V hart. These notes explain the original implementation and the changes made to run it again.</p><div class="actions"><a class="button primary" href="08-run-and-verify.html">Run the project</a><a class="button" href="09-development.html">How it was developed</a></div></section>
-<section class="start-panel"><div><p class="eyebrow">START WITH THE ORIGINAL INTERFACE</p><h2>Boot the kernel</h2><p>With the course tools installed, this opens the CEP graphical window.</p></div><pre><code>./run.sh</code></pre></section>
+    return f'''<section class="intro"><p class="eyebrow">RISC-V OS · EMILLY RAIANE RODRIGUES</p><h1>A small RISC-V kernel.</h1><p class="lead">Read the code. Run it in QEMU. Follow a character into the framebuffer, and a timer interrupt into the scheduler.</p><p>This project implements a graphical console, UART output, a clock and four kernel tasks on a single RISC-V hart. Explore how each part works, then follow the implementation step by step.</p><div class="actions"><a class="button primary" href="08-run-and-verify.html">Run the project</a><a class="button" href="09-development.html">Build it step by step</a></div></section>
+<section class="start-panel"><div><p class="eyebrow">OPEN THE GRAPHICAL CONSOLE</p><h2>Boot the kernel</h2><p>Set up the RISC-V compiler and a QEMU build with the CEP machine using the <a href="08-run-and-verify.html">installation guide</a>. This command then builds the kernel and opens its graphical window.</p></div><pre><code>./run.sh</code></pre></section>
 <section id="captures"><div class="section-heading"><p class="eyebrow">REAL OUTPUT</p><h2>Inside the QEMU window</h2><p>These images were read from the kernel's actual 1280 × 720 framebuffer. Select a capture to inspect it at full size; the small previews show its upper portion.</p></div><div class="capture-grid">{cards}</div><p class="source-note"><a href="assets/evidence/report.json">Capture report and source hashes</a> · <a href="08-run-and-verify.html#capture-the-real-framebuffer">Generate the same evidence</a></p></section>
-<section id="interactive"><div class="section-heading"><p class="eyebrow">INTERACTIVE DIAGRAMS</p><h2>Explore the mechanisms</h2><p>These are explanatory models in your browser. The kernel itself runs in QEMU using the commands in the tutorials.</p></div><section class="widget"><h3>Eight bytes become a character</h3><p>Choose a character from the original font and inspect the address of each pixel.</p><div id="pixel-explorer"></div><a class="widget-link" href="04-pixels-console.html">Read the console implementation →</a></section><section class="widget"><h3>One hart, four tasks</h3><p>Advance the timer, put a task to sleep or finish it. Follow which task receives the CPU.</p><div id="process-explorer"></div><a class="widget-link" href="07-processes.html">Read the scheduler implementation →</a></section></section>
+<section id="interactive"><div class="section-heading"><p class="eyebrow">INTERACTIVE DIAGRAMS</p><h2>Explore the mechanisms</h2><p>These are explanatory models in your browser. The kernel itself runs in QEMU using the commands in the tutorials.</p></div><section class="widget"><h3>Eight bytes become a character</h3><p>Choose a character from the kernel's font and inspect the address of each pixel.</p><div id="pixel-explorer"></div><a class="widget-link" href="04-pixels-console.html">Read the console implementation →</a></section><section class="widget"><h3>One hart, four tasks</h3><p>Advance the timer, put a task to sleep or finish it. Follow which task receives the CPU.</p><div id="process-explorer"></div><a class="widget-link" href="07-processes.html">Read the scheduler implementation →</a></section></section>
 <section><div class="section-heading"><p class="eyebrow">SOURCE-BASED TUTORIALS</p><h2>From boot to processes</h2><p>Each chapter connects the code, the design choices and a reproducible experiment.</p></div><div class="lesson-list">{lessons}</div></section>'''
 
 
