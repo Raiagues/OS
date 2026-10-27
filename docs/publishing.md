@@ -29,12 +29,12 @@ O workflow de CI compila e executa os testes no QEMU padrão. O resultado aparec
 Este projeto já contém Markdown com front matter e configuração Jekyll em `docs/`. Para habilitar a publicação:
 
 1. Abra [Settings → Pages](https://github.com/Raiagues/OS/settings/pages).
-2. Em **Build and deployment → Source**, escolha **Deploy from a branch**.
-3. Selecione o branch **main** e a pasta **/docs**.
-4. Clique em **Save** e acompanhe o deploy na aba **Actions**.
+2. Em **Build and deployment → Source**, escolha **GitHub Actions**.
+3. Abra **Actions → Kernel CI** e execute **Run workflow** no branch `main`, ou envie uma alteração para esse branch.
+4. O workflow compila o kernel, executa os testes e gera o site a partir de `docs/`. O job `deploy-pages` publica somente depois que as verificações passam.
 5. Depois que o deploy terminar, abra [raiagues.github.io/OS](https://raiagues.github.io/OS/).
 
-A publicação exige permissão de administração/manutenção e a configuração inicial do Pages. A presença dos arquivos no GitHub, sozinha, não comprova que o site já está publicado. O endereço pode retornar 404 enquanto o Pages estiver desabilitado ou o primeiro build estiver pendente.
+A publicação exige a configuração inicial do Pages por alguém com permissão de administração/manutenção. O workflow usa o token temporário do GitHub Actions; não precisa de um token pessoal nos secrets. A presença dos arquivos no GitHub, sozinha, não comprova que o site já está publicado. O endereço pode retornar 404 enquanto o Pages estiver desabilitado ou o primeiro build estiver pendente.
 
 O Jekyll transforma os arquivos `.md` em páginas `.html`. Os links internos da documentação usam essa extensão e o layout usa `relative_url` para respeitar o prefixo `/OS`. Para ler os fontes antes da publicação, use os links `.md` do README.
 

@@ -67,7 +67,11 @@ Captura dos pixels reais do framebuffer em `0x80000000`, obtida pela interface d
 
 O workflow `Kernel CI`, em `.github/workflows/ci.yml`, instala GCC RISC-V e QEMU padrão no Ubuntu 24.04, executa os testes e compila também o backend CEP. A execução do CEP precisa do emulador customizado, portanto não faz parte do runtime do runner padrão.
 
-Outro job gera o site Jekyll para detectar erros na documentação antes da publicação. Os artefatos da execução incluem ELFs, mapas do linker, logs e o site gerado. Os resultados de cada commit podem ser consultados em [GitHub Actions](https://github.com/Raiagues/OS/actions).
+Outro job gera o site Jekyll para detectar erros na documentação. No branch `main`, o job `deploy-pages` publica o site somente depois que o build do kernel, os testes e a geração da documentação passam. Os artefatos da execução incluem ELFs, mapas do linker, logs e o site gerado. Os resultados de cada commit podem ser consultados em [GitHub Actions](https://github.com/Raiagues/OS/actions).
+
+## Resultado com as ferramentas atuais
+
+O [primeiro build de CI](https://github.com/Raiagues/OS/actions/runs/40437684254) também passou com **GCC 13.2.0**, **binutils 2.42** e **QEMU 8.2.2** no Ubuntu 24.04, usando a arquitetura padrão `rv64ima_zicsr`. A demonstração completou em 8,1 segundos e o autoteste em 2,1 segundos. O backend CEP compilou, e o job de documentação gerou o site Jekyll com sucesso.
 
 ## O que esta validação não afirma
 
