@@ -2,11 +2,6 @@
 #include "uart.h"
 #include "time.h"
 
-static void serial_text(const char *text)
-{
-    while (*text) traite_car_uart(*text++);
-}
-
 void kernel_start(void)
 {
     disable_it();
@@ -21,11 +16,7 @@ void kernel_start(void)
     for (;;) {
         uint32_t seconds = nbr_secondes();
         if (seconds != previous) {
-            char message[64];
-            printf("clock=%us | timer interrupts=20 Hz\n", seconds);
-            snprintf(message, sizeof(message), "EVIDENCE: CLOCK SECOND=%u\n", seconds);
-            serial_text(message);
-            if (seconds == 3) serial_text("EVIDENCE: CLOCK PASS\n");
+            printf("clock = %u s\n", seconds);
             previous = seconds;
         }
         hlt();

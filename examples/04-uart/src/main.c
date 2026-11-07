@@ -17,14 +17,13 @@ void kernel_start(void)
     const char *title = "UART TX example\n";
     console_putbytes(title, (int)strlen(title));
 
-    serial_text("UART_ONLY: sent directly to UART.\n");
+    serial_text("UART only\n");
 
     place_curseur(4, 0);
-    const char *mirrored = "CONSOLE_MIRROR: screen and UART.\n";
+    const char *mirrored = "Console and UART\n";
     console_putbytes(mirrored, (int)strlen(mirrored));
-    const char *note = "The UART_ONLY line is not drawn here.\n";
+    const char *note = "The first message was sent directly to the serial terminal.\n";
     console_putbytes(note, (int)strlen(note));
-    serial_text("EVIDENCE: UART PASS direct_tx=1 console_mirror=1\n");
 
     for (;;) hlt();
 }

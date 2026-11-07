@@ -1,77 +1,110 @@
-# 01 — Pixels, colors and wrapping
+# 01 Pixels and characters
 
-Draw every printable ASCII character in red, green, blue and white, then send one long paragraph through the console. The final screen stays still.
+Write pixels to video memory, draw characters from an 8 × 8 bitmap font and
+observe how the console wraps text at the right edge.
 
-## Follow the code
+## Source files
 
-1. `kernel_start` initializes the UART and clears the screen.
-2. A loop fills `characters` with ASCII 32–126: space, punctuation, digits and both alphabets.
-3. `color_text` draws the 95 characters at text rows 1–4. Each glyph occupies 8 × 8 pixels. White calls `ecrit_car`; the other colors send the same font bits to `pixel`.
-4. `console_putbytes` receives one 1,602-byte paragraph with no newline bytes. Starting at row 6, it wraps after every 160 characters. The cursor ends at row 16, column 2; coordinates start at zero.
-5. The example sends `EVIDENCE: PIXELS PASS` to UART and waits. That marker identifies the completed drawing.
+| File | Role |
+| --- | --- |
+| [src/main.c](src/main.c) | Draws printable ASCII characters in four colors and a wrapping text sample |
+| [src/console.c](src/console.c) | `pixel`, `ecrit_car`, cursor movement and `console_putbytes` |
+| [src/console.h](src/console.h) | Framebuffer address and color constants |
+| [src/font.c](src/font.c) | Bitmap data for the characters |
+| [src/uart.c](src/uart.c) | Sends console bytes to the terminal |
+| [src/crt0.S](src/crt0.S), [src/kernel.lds](src/kernel.lds) | Prepare the C entry point and load address |
 
-A pixel at `(x, y)` occupies the 32-bit word at `0x80000000 + 4 * (y * 1280 + x)`. A font byte describes one row of eight pixels; bit 0 is the leftmost pixel.
+## From a character to video memory
 
-Try changing one color word in `main.c`, or add one character to the paragraph and inspect the new cursor position. No font scaling or animation is involved.
-
-## Recorded output
-
-![Pixels example in QEMU](evidence/pixels.png)
-
-[UART output](evidence/pixels.txt) · [Capture report](evidence/report.json)
-
-## Run with Docker
-
-On Linux x86_64 with an X11 or XWayland desktop, install Docker, Xephyr and xauth. On Ubuntu/Debian, the package names are `docker.io`, `xserver-xephyr` and `xauth`. Docker must be running and accessible to your user; check with `docker info`.
-
-From this folder:
-
-```sh
-./scripts/run-container.sh
+```mermaid
+flowchart LR
+    A["main.c: color_text"] --> B["Read eight font bytes"]
+    B --> C["Check each bit"]
+    C --> D["pixel: write a color"]
+    D --> E["CEP framebuffer"]
 ```
 
-The script downloads a pinned image containing the RISC-V compiler and CEP QEMU, compiles this project, and opens a 1280 × 720 window. UART output appears in the terminal. Close the window or press Ctrl+C to stop. The script accepts no example selector: this folder is the whole example.
+`pixel(x, y, color)` writes a 32-bit color. A row contains 1280 pixels, so:
 
-## Run with local CEP tools
+```text
+pixel index = y * 1280 + x
+byte address = 0x80000000 + 4 * pixel index
+```
 
-The graphical device belongs to QEMU's **CEP** machine. Standard QEMU packages do not include it. With the compiler and CEP QEMU installed under `/matieres/4MMPCSEA/xinul`, run:
+In `console.c`, pointer arithmetic supplies the multiplication by four:
+
+```c
+volatile uint32_t *adresse = (volatile uint32_t *)ADRESSE_INITIAL
+                            + column + ligne * DISPLAY_WIDTH;
+*adresse = couleur;
+```
+
+Each byte in `font8x8_basic[character]` describes one row of eight pixels.
+`color_text` shifts the byte and checks its low bit to decide whether to write
+the selected color or black. `ecrit_car` performs the same font lookup for white
+text. Character coordinates become pixel coordinates by multiplying by eight.
+
+`kernel_start` draws ASCII values 32–126 on rows 1–4 in red, green, blue and
+white. It then places the cursor at row 6 and writes a 63-byte sample four times
+without a newline. The 252 characters occupy one full 160-character row and
+92 columns of the next row. The cursor ends at row 7, column 92. Coordinates
+start at zero.
+
+The colored rows are drawn directly in the framebuffer. The wrapping sample
+passes through `console_putbytes`, which also sends its bytes to UART.
+
+## Build and run
+
+From the repository root:
 
 ```sh
+cd examples/01-pixels
 sh scripts/course-env.sh make check
 sh scripts/course-env.sh make
 ./run.sh
 ```
 
-For another installation directory:
+The scripts use the course tools at `/matieres/4MMPCSEA/xinul`: the RISC-V GCC
+compiler and the custom QEMU with the CEP machine. The executable is
+`build/cep/kernel.elf`. For another installation, set the directory explicitly:
 
 ```sh
 COURSE_TOOLS=/path/to/xinul ./run.sh
 ```
 
-With separately configured tools, use explicit overrides:
+To use Docker instead, run `./scripts/run-container.sh` in this folder.
+It requires Linux x86_64, Docker, Xephyr, xauth and an X11 or XWayland desktop.
+The Ubuntu/Debian packages are `docker.io`, `xserver-xephyr` and `xauth`.
+Check `docker info`; the launcher obtains the course compiler/QEMU image on
+first use. Both launch methods open the same activity. Close the window or
+press Ctrl+C to stop.
+
+To run without a window:
 
 ```sh
-make CROSS_COMPILE=/path/to/bin/riscv64-unknown-elf- \
-     QEMU=/path/to/qemu-system-riscv64 RISCV_ARCH=rv64ima run
+sh scripts/course-env.sh make run-serial
 ```
 
-GCC 11 bundled with CEP uses `rv64ima`; newer compilers can use the default `rv64ima_zicsr`. `make` builds `build/cep/kernel.elf`. `BUILD=build/custom` changes the output directory. `make run-serial` keeps the framebuffer offscreen and prints UART output in the terminal; exit with Ctrl+A, X. `make clean` removes the selected build directory.
+This still uses CEP; its graphics are offscreen. Exit with Ctrl+A, then X.
+The normal QEMU installation does not include this course machine.
 
-## Files to read
+To save the serial output after building, use:
 
-| File | Purpose |
-| --- | --- |
-| [src/main.c](src/main.c) | The complete example, starting at `kernel_start` |
-| [src/console.c](src/console.c) | Pixel writes, characters, cursor, control characters and scrolling |
-| [src/font.c](src/font.c) | The 8 × 8 bitmap font |
-| [src/uart.c](src/uart.c) | Polling output to the CEP UART |
-| [src/crt0.S](src/crt0.S) | Set up the boot stack, clear BSS, call C |
-| [src/kernel.lds](src/kernel.lds) | Place the ELF at CEP address `0x1000` |
-| [src/string.c](src/string.c) | The memory/string routines this example uses |
-| `Makefile` | Explicit local sources and fixed CEP build |
+```sh
+sh scripts/course-env.sh sh -c '
+  "$QEMU" -machine cep -bios none -kernel build/cep/kernel.elf \
+    -m 32M -smp 1 -display sdl -monitor none -serial file:build/uart.txt
+'
+```
 
-Every source, header, linker script and launcher needed by this example is inside this folder. You can copy the folder elsewhere and build it there. The only external requirements are the host tools or Docker image. Interrupts stay disabled; this static example has no clock, process table or scheduler.
+The saved bytes are in `build/uart.txt`. The screenshots below show the CEP
+framebuffer at 1280 × 720. Output was captured with the course GCC 11.1.0 and
+QEMU 6.2.50 tools. All source and launch files needed by this activity are local
+to this folder. [Attribution and licenses](../../README.md#credits).
 
-## Credits
+## QEMU output
 
-Source notices are retained in the local files. The font credits Daniel Hepper, Marcel Sondaar and IBM and declares public-domain terms. The small runtime includes code with its own notices; see the source headers and [COPYING.GPL-2](COPYING.GPL-2).
+![ASCII characters and automatic wrapping](output/pixels.png)
+
+[Serial output](output/pixels.txt). The four colored rows are graphical output;
+they are not transmitted as text. The screen remains static after drawing.

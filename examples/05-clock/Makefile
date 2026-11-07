@@ -46,13 +46,13 @@ check:
 	@sh scripts/check-tools.sh '$(CROSS_COMPILE)' '$(QEMU)' '$(RISCV_ARCH)'
 
 run: $(KERNEL)
-	"$(QEMU)" $(QEMUFLAGS) -name "OS - clock" -serial mon:stdio -display sdl,show-cursor=on
+	"$(QEMU)" $(QEMUFLAGS) -name "05 clock" -serial mon:stdio -display sdl,show-cursor=on
 
 run-serial: $(KERNEL)
 	"$(QEMU)" $(QEMUFLAGS) -nographic
 
 debug: $(KERNEL)
-	"$(QEMU)" $(QEMUFLAGS) -name "OS - clock" -serial mon:stdio -display sdl,show-cursor=on -gdb tcp:127.0.0.1:$(GDB_PORT) -S
+	"$(QEMU)" $(QEMUFLAGS) -name "05 clock" -serial mon:stdio -display sdl,show-cursor=on -gdb tcp:127.0.0.1:$(GDB_PORT) -S
 
 clean:
 	rm -rf -- "$(BUILD)"

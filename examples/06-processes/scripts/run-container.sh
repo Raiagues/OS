@@ -107,7 +107,7 @@ docker run --rm --init --cidfile "$cid_file" --platform linux/amd64 --ulimit cor
     --entrypoint sh "$image" -ec '
         course_tools=/matieres/4MMPCSEA/xinul/bin
         build_dir=build/container/cep
-        make PLATFORM=cep BUILD="$build_dir" \
+        make BUILD="$build_dir" \
             CROSS_COMPILE="$course_tools/riscv64-unknown-elf-" \
             RISCV_ARCH=rv64ima all
         exec "$course_tools/qemu-system-riscv64" \

@@ -6,7 +6,7 @@ PHDRS
     rodata PT_LOAD FLAGS(4);
     data PT_LOAD FLAGS(6);
 }
-/* Passed by the Makefile: virt RAM = 0x80000000, original CEP = 0x1000. */
+/* CEP kernel load address: 0x1000. */
 SECTIONS
 {
     . = KERNEL_BASE;

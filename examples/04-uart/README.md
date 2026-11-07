@@ -1,87 +1,106 @@
-# 04 — UART output
+# 04 UART
 
-A standalone CEP kernel that shows the difference between sending serial bytes and writing to the graphical console. Start reading at [src/main.c](src/main.c): it initializes UART, clears the screen, sends one message directly, then sends another through `console_putbytes`.
+Send characters through the CEP UART and compare direct serial output with
+text written through the graphical console.
 
-## Run this folder on its own
+## Source files
 
-All source, headers, boot code, linker configuration and launch scripts are local. You can copy this entire directory elsewhere and run these commands from that copy.
+| File | Role |
+| --- | --- |
+| [src/main.c](src/main.c) | Sends one message directly to UART and another through the console |
+| [src/uart.c](src/uart.c) | Initializes the transmitter and writes bytes |
+| [src/cep_platform.h](src/cep_platform.h) | UART clock, baud rate and register definitions |
+| [src/console.c](src/console.c) | Mirrors console output to UART |
 
-For a Linux/amd64 desktop with Docker available, install the display helpers and start the fixed example:
+## Memory-mapped transmission
 
-```sh
-sudo apt-get install -y xserver-xephyr xauth
-./scripts/run-container.sh
+```mermaid
+flowchart LR
+    A["serial_text"] --> B["traite_car_uart"]
+    B --> C["UART transmit register"]
+    C --> D["QEMU serial terminal"]
+    E["console_putbytes"] --> B
+    E --> F["Framebuffer console"]
 ```
 
-The launcher downloads a pinned CEP toolchain image and opens an isolated Xephyr window. It requires an X11 or XWayland session. Close the window or press Ctrl+C to stop. If Docker is not installed, follow its [Ubuntu installation instructions](https://docs.docker.com/engine/install/ubuntu/).
+MMIO means memory-mapped I/O: the CPU accesses the peripheral through addresses
+in its memory map. CEP exposes a SiFive-style UART at `0x10013000`. Its registers
+are 32-bit words, so each index below advances four bytes.
 
-With CEP tools installed locally:
+| Access | Byte offset | Purpose |
+| --- | --- | --- |
+| `uart[0]` | `0x00` | Transmit a byte; bit 31 reports a full FIFO |
+| `uart[2]` | `0x08` | Enable the transmitter |
+| `uart[6]` | `0x18` | Set the baud-rate divider |
+
+`init_uart` sets the divider for the configured 32 MHz clock and 115200 baud,
+then enables transmission. Sending a character uses polling:
+
+```c
+while (uart[0] & 0x80000000U) { }
+uart[0] = (uint8_t)c;
+```
+
+The loop waits until the transmit FIFO has space. The assignment submits the
+byte. The pointer is `volatile` so the compiler performs the device accesses.
+This activity implements transmission; it does not read keyboard input.
+
+In `main.c`, `serial_text("UART only\n")` calls the driver directly. The next
+message goes through `console_putbytes`, which writes both pixels and serial
+bytes. The messages therefore have different destinations.
+
+## Build and run
+
+From the repository root:
 
 ```sh
+cd examples/04-uart
+sh scripts/course-env.sh make check
+sh scripts/course-env.sh make
 ./run.sh
 ```
 
-The default tools directory is `/matieres/4MMPCSEA/xinul`. For another location:
+The scripts use the course tools at `/matieres/4MMPCSEA/xinul`: the RISC-V GCC
+compiler and the custom QEMU with the CEP machine. The executable is
+`build/cep/kernel.elf`. For another installation, set the directory explicitly:
 
 ```sh
 COURSE_TOOLS=/path/to/xinul ./run.sh
 ```
 
-That directory must contain `bin/riscv64-unknown-elf-gcc` and a `bin/qemu-system-riscv64` with the `cep` machine. Standard distribution QEMU does not include CEP.
+To use Docker instead, run `./scripts/run-container.sh` in this folder.
+It requires Linux x86_64, Docker, Xephyr, xauth and an X11 or XWayland desktop.
+The Ubuntu/Debian packages are `docker.io`, `xserver-xephyr` and `xauth`.
+Check `docker info`; the launcher obtains the course compiler/QEMU image on
+first use. Both launch methods open the same activity. Close the window or
+press Ctrl+C to stop.
 
-Build and check without opening a window:
+To run without a window:
 
 ```sh
-sh scripts/course-env.sh make check all
+sh scripts/course-env.sh make run-serial
 ```
 
-The executable is `build/cep/kernel.elf`. The Makefile also accepts `CROSS_COMPILE`, `QEMU`, `RISCV_ARCH`, `BUILD` and `OPT` overrides. For separately installed tools, use `make` directly; use `rv64ima` with GCC 11 or the default `rv64ima_zicsr` with modern toolchains.
+This still uses CEP; its graphics are offscreen. Exit with Ctrl+A, then X.
+The normal QEMU installation does not include this course machine.
+
+To save the serial output after building, use:
 
 ```sh
-make CROSS_COMPILE=/path/to/riscv64-unknown-elf- \
-     QEMU=/path/to/qemu-system-riscv64 RISCV_ARCH=rv64ima BUILD=build/custom
+sh scripts/course-env.sh sh -c '
+  "$QEMU" -machine cep -bios none -kernel build/cep/kernel.elf \
+    -m 32M -smp 1 -display sdl -monitor none -serial file:build/uart.txt
+'
 ```
 
-`make run-serial` runs without a window; exit with Ctrl+A, then X. `make debug` starts paused for GDB on `localhost:1234`. Prefix either with `sh scripts/course-env.sh` when using the tool-directory wrapper.
+The saved bytes are in `build/uart.txt`. The screenshots below show the CEP
+framebuffer at 1280 × 720. Output was captured with the course GCC 11.1.0 and
+QEMU 6.2.50 tools. All source and launch files needed by this activity are local
+to this folder. [Attribution and licenses](../../README.md#credits).
 
-## What to observe
+## QEMU output
 
-![UART example framebuffer](evidence/uart.png)
+![Graphical console during UART transmission](output/uart.png)
 
-Compare the [serial log](evidence/uart.txt) and [capture report](evidence/report.json) with the screen.
-
-The terminal receives both lines:
-
-```text
-UART_ONLY: sent directly to UART.
-CONSOLE_MIRROR: screen and UART.
-```
-
-The framebuffer contains the `CONSOLE_MIRROR` line. The `UART_ONLY` payload is sent directly to UART and does not appear as a line on screen. The explanatory sentence on screen names it so you can compare the two paths.
-
-```mermaid
-flowchart LR
-    A["serial_text"] --> U["traite_car_uart"]
-    U --> T["Host terminal"]
-    B["console_putbytes"] --> U
-    B --> C["traite_car → ecrit_car → pixel"]
-    C --> F["Framebuffer window"]
-```
-
-[uart.c](src/uart.c) accesses the SiFive UART at `0x10013000` through 32-bit registers. `init_uart` enables transmission and sets its divider. `traite_car_uart` waits while bit 31 of TX data indicates a full FIFO, then writes the byte. The register pointer is `volatile` so these device accesses are performed.
-
-There is no timer, task table, scheduler or input driver in this folder. Interrupts stay disabled. After sending the messages, `kernel_start` stays in a `wfi` loop until QEMU is closed. UART reception and keyboard input are not implemented.
-
-## Files to follow
-
-| File | Role |
-| --- | --- |
-| [main.c](src/main.c) | Complete example in one linear startup function |
-| [uart.c](src/uart.c), [uart.h](src/uart.h) | UART initialization and byte transmission |
-| [console.c](src/console.c), [font.c](src/font.c) | Graphical text and the mirrored console path |
-| [crt0.S](src/crt0.S), [kernel.lds](src/kernel.lds) | Boot stack, BSS clearing and ELF layout |
-| [string.c](src/string.c) and local headers | Memory and string operations used by the console |
-
-`EVIDENCE: UART PASS direct_tx=1 console_mirror=1` marks completion for a host capture tool. It is a capture marker, not an in-kernel framebuffer assertion. Compare the actual serial bytes and display to verify the result.
-
-Support-source notices are retained in the local files. The referenced GPL text is included as [COPYING.GPL-2](COPYING.GPL-2).
+[Serial output](output/uart.txt). `UART only` appears in the terminal;
+`Console and UART` appears in both the terminal and graphical window.

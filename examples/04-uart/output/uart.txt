@@ -1,0 +1,4 @@
+UART TX example
+UART only
+Console and UART
+The first message was sent directly to the serial terminal.

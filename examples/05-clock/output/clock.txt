@@ -1,0 +1,5 @@
+Clock and timer: 20 interrupts per second.
+clock = 0 s
+clock = 1 s
+clock = 2 s
+clock = 3 s

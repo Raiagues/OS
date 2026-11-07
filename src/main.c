@@ -32,17 +32,8 @@ void proc3(void)
 
 void idle(void)
 {
-    int announced = 0;
     printf("[idle] pid = %i\n", mon_pid());
     for (;;) {
-        int finished = 1;
-        for (int i = 1; i < n_proc; ++i) {
-            if (table_des_processus[i].state != DIE) { finished = 0; }
-        }
-        if (finished && !announced && n_proc == N) {
-            printf("[OS] DEMO COMPLETE: proc1, proc2, proc3 finished; idle running.\n");
-            announced = 1;
-        }
         enable_it();
         hlt();
     }
@@ -53,12 +44,7 @@ void kernel_start(void)
     disable_it();
     init_uart();
     efface_ecran();
-#ifdef PLATFORM_CEP
-    printf("OS / RISC-V RV64 / QEMU CEP\n");
-#else
-    printf("OS / RISC-V RV64 / QEMU virt\n");
-#endif
-    printf("Timer: 20 Hz | processes: idle + 3 | mode: M\n");
+    printf("RISC-V kernel\n");
 
     /* Set up every task before the first timer interrupt can run. */
     init_proc();

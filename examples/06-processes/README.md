@@ -1,118 +1,171 @@
-# 06 — Processes
+# 06 Processes
 
-This is a complete RV64 kernel project with four tasks: `idle`, `proc1`, `proc2` and `proc3`. A 20 Hz timer drives round-robin scheduling. The CEP display shows the console, clock and task states; UART carries the same console messages.
+Run three C functions as kernel tasks, each with a saved context and a separate
+stack. A timer-driven round-robin scheduler selects the next ready task.
 
-Every source file, header, boot routine, linker script and launcher used by this project is inside this folder. You can copy the folder elsewhere and build it independently. Start with [src/main.c](src/main.c): it contains the boot sequence and all four task functions directly.
+## Source files
 
-## Run the graphical example
+| File | Role |
+| --- | --- |
+| [src/main.c](src/main.c) | Initializes the kernel and defines `proc1`, `proc2`, `proc3` and `idle` |
+| [src/processus.h](src/processus.h) | Task record, states and table size |
+| [src/processus.c](src/processus.c) | Creation, scheduling, sleep, wakeup and termination |
+| [src/ctxt.S](src/ctxt.S) | Saves and restores task contexts |
+| [src/time.c](src/time.c), [src/traitant.S](src/traitant.S) | Timer interrupts and the interrupted register frame |
+| [src/console.c](src/console.c), [src/uart.c](src/uart.c) | Display and transmit task events |
 
-Run these commands from this folder.
+## Startup and task table
 
-If a CEP compiler and QEMU are installed:
+`kernel_start` initializes the console and task table while interrupts are
+disabled. It installs the timer handler, creates the three tasks, enables the
+timer and enters `idle`.
+
+```mermaid
+flowchart LR
+    A["Initialize task table"] --> B["Create proc1, proc2 and proc3"]
+    B --> C["Enable timer"]
+    C --> D["idle waits for interrupts"]
+    D --> E["Timer calls ordonnance"]
+    E --> F["Select next RUNNABLE task"]
+    F --> G["ctx_sw restores its context"]
+```
+
+The four table entries hold a PID, name, state, saved registers, stack and
+wakeup deadline. Three task stacks contain 4096 words of 64 bits: 32 KiB each.
+`idle` continues on the boot stack. All tasks share kernel memory and machine
+mode on one emulated CPU; they do not have separate address spaces.
+
+## Round-robin and task states
+
+`ordonnance` checks wakeup deadlines, then scans the table circularly from the
+next PID. It selects a `RUNNABLE` entry and skips sleeping or terminated tasks.
+`idle` participates in the same circular order and remains available.
+
+```mermaid
+stateDiagram-v2
+    state "RUNNABLE: ready" as Ready
+    state "RUN: executing" as Running
+    state "WAIT: sleeping" as Waiting
+    state "DIE: finished" as Finished
+    [*] --> Ready: cree_processus
+    Ready --> Running: ordonnance
+    Running --> Ready: preemption or yield
+    Running --> Waiting: dors
+    Waiting --> Ready: wakeup deadline reached
+    Running --> Finished: fin_processus or function return
+```
+
+`dors(n)` stores `nbr_secondes() + n`, marks the task `WAIT` and calls the
+scheduler. The task becomes ready when its deadline is reached; it resumes
+when selected. Deadlines use whole kernel seconds. `fin_processus` marks a task
+`DIE` and schedules another. `proc_launcher` calls it automatically when a task
+function returns. Finished table slots are not reused.
+
+## Context switching
+
+A stack is a region of RAM holding function-call data. The CPU's `sp` register
+points into the stack currently in use. Each task retains its own stack in RAM.
+
+```mermaid
+flowchart LR
+    A["Running task: CPU registers"] --> B["Save in old task reg array"]
+    B --> C["Load next task reg array"]
+    C --> D["Restore sp and ra"]
+    D --> E["Continue next task on its stack"]
+```
+
+The C scheduler passes the old and new register arrays to `ctx_sw` in `a0` and
+`a1`. These instructions show the stack and return-address part of the switch:
+
+```asm
+sd ra, 0*8(a0)    # Save the old return address.
+sd sp, 1*8(a0)    # Save the old stack pointer.
+# Save the remaining context, then restore the next context.
+ld ra, 0*8(a1)    # Load the next return address.
+ld sp, 1*8(a1)    # Select the next stack.
+# Restore the remaining registers before ret.
+```
+
+The full routine also saves/restores `gp`, `tp`, `s0..s11`, `mepc` and `mstatus`.
+An interrupt has a separate frame for argument and temporary registers in
+`traitant.S`. Table updates and the switch run with interrupts disabled.
+Saving a stack pointer is sufficient to find the existing stack again; the
+stack contents are not copied during each switch.
+
+## Task bodies
+
+Each task prints its identity and kernel time, sleeps, repeats once, and exits.
+
+| Task | Sleep per iteration | Exit |
+| --- | --- | --- |
+| `proc1` | 2 seconds | Returns through `proc_launcher` |
+| `proc2` | 3 seconds | Calls `fin_processus` |
+| `proc3` | 4 seconds | Returns through `proc_launcher` |
+
+`idle` prints its identity once and waits with `wfi`. The clock continues after
+the other tasks have finished. Sleep yields voluntarily; timer interrupts also
+invoke the scheduler between these calls.
+
+## Build and run
+
+From the repository root:
 
 ```sh
+cd examples/06-processes
+sh scripts/course-env.sh make check
+sh scripts/course-env.sh make
 ./run.sh
 ```
 
-The launcher checks `/matieres/4MMPCSEA/xinul`. For a different installation:
+The scripts use the course tools at `/matieres/4MMPCSEA/xinul`: the RISC-V GCC
+compiler and the custom QEMU with the CEP machine. The executable is
+`build/cep/kernel.elf`. For another installation, set the directory explicitly:
 
 ```sh
 COURSE_TOOLS=/path/to/xinul ./run.sh
 ```
 
-The selected directory must contain `bin/riscv64-unknown-elf-gcc` and `bin/qemu-system-riscv64`. The QEMU executable must support `-machine cep`; standard distribution QEMU packages do not include that machine. The local wrapper selects `rv64ima` for the bundled GCC 11 compiler.
+To use Docker instead, run `./scripts/run-container.sh` in this folder.
+It requires Linux x86_64, Docker, Xephyr, xauth and an X11 or XWayland desktop.
+The Ubuntu/Debian packages are `docker.io`, `xserver-xephyr` and `xauth`.
+Check `docker info`; the launcher obtains the course compiler/QEMU image on
+first use. Both launch methods open the same activity. Close the window or
+press Ctrl+C to stop.
 
-To build without opening a window:
-
-```sh
-./scripts/course-env.sh make check all
-```
-
-The executable is `build/cep/kernel.elf`. Temporary files and compatibility libraries stay in this folder's `build/` directory.
-
-### Use the pinned tools image
-
-On Linux/amd64, install Docker using its [installation instructions](https://docs.docker.com/engine/install/), and make sure `docker info` works as your user. On Ubuntu or Debian, install the graphical helpers:
+To run without a window:
 
 ```sh
-sudo apt install xserver-xephyr xauth
-./scripts/run-container.sh
+sh scripts/course-env.sh make run-serial
 ```
 
-The script builds and runs this folder only. Its pinned image contains the compiler and CEP QEMU; the first download is approximately 700 MB and the unpacked image occupies about 2 GB. Xephyr provides an isolated graphical window with a temporary credential. The container does not receive your main desktop credential.
+This still uses CEP; its graphics are offscreen. Exit with Ctrl+A, then X.
+The normal QEMU installation does not include this course machine.
 
-Container builds use `build/container/cep/`. Close the Xephyr window or press Ctrl+C to stop the temporary container. An X11 or XWayland desktop and free space for Xephyr's temporary keyboard files are required.
-
-## Run with standard QEMU
-
-The same process code also supports QEMU's `virt` machine with serial output. On Ubuntu or Debian:
+To save the serial output after building, use:
 
 ```sh
-sudo apt install make gcc-riscv64-unknown-elf binutils-riscv64-unknown-elf qemu-system-misc
-make PLATFORM=virt check all
-make PLATFORM=virt run
+sh scripts/course-env.sh sh -c '
+  "$QEMU" -machine cep -bios none -kernel build/cep/kernel.elf \
+    -m 32M -smp 1 -display sdl -monitor none -serial file:build/uart.txt
+'
 ```
 
-This builds `build/virt/kernel.elf`. Press **Ctrl+A, then X** to exit QEMU's terminal mode. The `virt` backend prints task events but has no graphical clock or state panel.
+The saved bytes are in `build/uart.txt`. The screenshots below show the CEP
+framebuffer at 1280 × 720. Output was captured with the course GCC 11.1.0 and
+QEMU 6.2.50 tools. All source and launch files needed by this activity are local
+to this folder. [Attribution and licenses](../../README.md#credits).
 
-The Makefile accepts tool and output overrides:
+## QEMU output
 
-```sh
-make PLATFORM=cep CROSS_COMPILE=/path/to/bin/riscv64-unknown-elf- \
-  QEMU=/path/to/bin/qemu-system-riscv64 RISCV_ARCH=rv64ima \
-  BUILD=build/custom all
-```
+![Tasks waiting after startup](output/processes-start.png)
 
-Use `rv64ima_zicsr`, the default, with current RISC-V compiler packages. Use `rv64ima` with the GCC 11 tools bundled in the pinned image. `make help` lists the available targets.
+![Tasks terminated while idle and the clock continue](output/processes-end.png)
 
-## Follow the execution
+[Serial output](output/processes.txt) contains task creation, sleep, wakeup and
+exit messages. The state panel uses `0 = RUN`, `1 = RUNNABLE`, `2 = WAIT` and
+`3 = DIE`. Near the beginning it shows idle running with three waiting tasks;
+after completion it shows `[0 3 3 3]`. The panel refreshes once per second and
+may lag behind the latest serial event.
 
-1. `crt0.S` disables interrupts, selects hart 0, sets up `gp` and the boot stack, clears BSS and calls `kernel_start()`.
-2. `kernel_start()` initializes UART and the console, prepares the process table and trap vector, creates three tasks, then enables the timer. `idle` occupies PID 0 and starts on the boot stack.
-3. Every timer interrupt enters `mon_traitant`, saves registers and calls `trap_handler()`. The handler updates time and calls `ordonnance()`.
-4. The scheduler wakes tasks whose deadlines have arrived, chooses the next ready slot and calls `ctx_sw()` when the selected task changes.
-5. `dors()` marks the current task `WAIT`. It resumes only after becoming ready and being selected again.
-6. A task either calls `fin_processus()` or returns through `proc_launcher()`. Both paths mark its slot `DIE`; that task never resumes.
-
-| Task | Work | Termination |
-| --- | --- | --- |
-| `idle`, PID 0 | Waits for interrupts and reports completion once | Keeps running |
-| `proc1`, PID 1 | Prints its identity, then sleeps for 2 kernel seconds; twice | Returns from its function |
-| `proc2`, PID 2 | Prints its identity, then sleeps for 3 kernel seconds; twice | Calls `fin_processus()` |
-| `proc3`, PID 3 | Prints its identity, then sleeps for 4 kernel seconds; twice | Returns from its function |
-
-Sleep deadlines use `nbr_secondes()`, which rounds the tick count down to whole seconds. Treat console timestamps as kernel-time observations, not precise wall-clock measurements.
-
-The console and UART retain the function messages printed by the process implementation, such as `Processus`, `Debut du sommeil` and `Fin du processus`. Each task prints its identity twice and terminates once. After all three have finished, expect:
-
-```text
-[OS] DEMO COMPLETE: proc1, proc2, proc3 finished; idle running.
-```
-
-The CEP clock continues after that message. The task-state digits are `0 = RUN`, `1 = RUNNABLE`, `2 = WAIT`, `3 = DIE`; the final panel is `[0 3 3 3]`. The table has four fixed slots, shared memory and no slot reuse or user-mode isolation.
-
-## Read the implementation
-
-| Files | Responsibility |
-| --- | --- |
-| [main.c](src/main.c) | Boot orchestration, task bodies and idle loop |
-| [processus.c](src/processus.c), [processus.h](src/processus.h) | Task table, creation, scheduling, sleep, termination and state display |
-| [ctxt.S](src/ctxt.S) | Save and restore the 18-word task context, including `mstatus` |
-| [time.c](src/time.c), [traitant.S](src/traitant.S) | Timer programming, trap dispatch and interrupt register frame |
-| [console.c](src/console.c), [font.c](src/font.c) | CEP framebuffer text and scrolling |
-| [console_serial.c](src/console_serial.c), [uart.c](src/uart.c) | Serial backend and platform-specific UART access |
-| [crt0.S](src/crt0.S), [kernel.lds](src/kernel.lds) | Entry point, memory layout and initial stack |
-| Remaining local headers and runtime sources | Freestanding formatting, strings, arithmetic and device definitions |
-
-For a halted boot with a GDB server on `127.0.0.1:1234`, use `make debug` with the same platform and tool overrides as your build. Useful breakpoints are `kernel_start`, `ordonnance`, `ctx_sw` and `fin_processus`.
-
-Third-party notices remain in the runtime and font sources. [COPYING.GPL-2](COPYING.GPL-2) accompanies the files that refer to it.
-
-## Recorded output
-
-![Processes sleeping](evidence/processes-start.png)
-
-![All three processes finished](evidence/processes-end.png)
-
-Compare the [UART log](evidence/processes.txt) with the state display. The
-[capture report](evidence/report.json) identifies the source files and tools.
+The screenshots were captured near kernel seconds 1 and 9. Event times and
+interleaving can vary slightly between runs.

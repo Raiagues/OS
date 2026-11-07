@@ -1,58 +1,81 @@
-# OS — RISC-V
+# RISC-V operating system
 
-A small operating system written in C and RISC-V assembly. It runs on one emulated CPU in QEMU, with a graphical console, UART output, timer interrupts and a round-robin scheduler.
+Operating systems and computer architecture course project, written in C and
+RISC-V assembly. The kernel runs on the course's **CEP machine in QEMU** and
+implements a graphical console, UART output, timer interrupts and task scheduling.
 
-**[Tutorials, real screenshots and interactive diagrams](https://raiagues.github.io/OS/)**
+The activity folders separate the course mechanisms into runnable programs.
+They include later build and correctness fixes; they are not unchanged snapshots
+of the original submissions.
 
-## Start with one small project
+## Activities
 
-Each example is a complete project with its own source files, Makefile, launchers, README and captured output. You can copy one folder elsewhere and build it on its own. Open its `src/main.c` first.
-
-| Folder | What to learn |
+| Activity | Implementation |
 | --- | --- |
-| [01-pixels](examples/01-pixels/README.md) | Pixel addresses, bitmap characters, colors and wrapping |
-| [02-console](examples/02-console/README.md) | Cursor movement, newline, tab, backspace and clear |
-| [03-scroll](examples/03-scroll/README.md) | Moving text when the screen fills |
-| [04-uart](examples/04-uart/README.md) | Sending bytes and comparing serial output with the screen |
-| [05-clock](examples/05-clock/README.md) | Timer interrupts and a clock, without a scheduler |
-| [06-processes](examples/06-processes/README.md) | Separate stacks, context switching, sleep and exit |
+| [01 Pixels and characters](examples/01-pixels/README.md) | Framebuffer addresses, bitmap fonts and text wrapping |
+| [02 Console](examples/02-console/README.md) | Cursor movement and control characters |
+| [03 Scrolling](examples/03-scroll/README.md) | Moving overlapping rows in video memory |
+| [04 UART](examples/04-uart/README.md) | Serial transmission through device registers |
+| [05 Timer interrupts](examples/05-clock/README.md) | Interrupt entry, timer configuration and timekeeping |
+| [06 Processes](examples/06-processes/README.md) | Task states, context switching, sleep, wakeup and termination |
 
-For example, with Docker, Xephyr and xauth installed on Linux/amd64:
+Each folder contains its source, Makefile, launch scripts and a README with
+code explanations, diagrams, QEMU screenshots and serial output.
+
+## Run an activity
+
+The compiler and custom QEMU from the course are expected under
+`/matieres/4MMPCSEA/xinul`. For example, from the repository root:
 
 ```sh
-git clone https://github.com/Raiagues/OS.git
-cd OS/examples/02-console
+cd examples/01-pixels
+./run.sh
+```
+
+For a different installation:
+
+```sh
+COURSE_TOOLS=/path/to/xinul ./run.sh
+```
+
+Standard QEMU packages do not provide the CEP machine or its framebuffer.
+Alternatively, each activity can use the course tools image through Docker:
+
+```sh
 ./scripts/run-container.sh
 ```
 
-With CEP tools installed locally, use `./run.sh` in that same folder. Both commands run just the console example. See [installation](docs/08-run-and-verify.md) for dependency setup and [the example index](examples/README.md) for the reading order.
+This requires Linux x86_64, Docker, Xephyr, xauth and an X11 or XWayland desktop.
+On Ubuntu/Debian the packages are `docker.io`, `xserver-xephyr` and `xauth`.
+Check `docker info` before launching. The image is downloaded on first use.
 
-## Run the complete kernel
+## Complete kernel
 
-From the repository root:
-
-```sh
-./scripts/run-container.sh
-```
-
-Or use `./run.sh` with local CEP tools. Three processes sleep for 2, 3 and 4 seconds, twice each, then terminate. `idle` keeps running and the clock continues. Close the QEMU window to exit.
-
-The complete kernel is in [src](src/), starting at [main.c](src/main.c). Its display uses a 1280 × 720 framebuffer and an 8 × 8 font. Keyboard input and a shell are not implemented; tasks share kernel memory and machine-mode privileges.
-
-## Understand and verify
-
-The [guide](docs/README.md) explains the code, design choices and expected output, from boot to context switching. The [implementation walkthrough](docs/09-development.md) connects the independent examples in order.
-
-With a RISC-V compiler and standard QEMU installed:
+The root [src](src/) combines the console, timer and processes. Starting from
+the repository root:
 
 ```sh
-make test
+sh scripts/course-env.sh make check
+sh scripts/course-env.sh make
+./run.sh
 ```
 
-This runs the complete kernel and the separate [kernel regression project](tests/kernel/README.md), checking preemption, sleep, termination and formatting bounds. The [capture instructions](docs/08-run-and-verify.md#capture-the-real-framebuffer) regenerate each example's real screenshots and UART logs. GitHub Actions builds the independent projects and runs the checks.
+The same Docker launcher is available at the root. `src/main.c` starts three
+tasks that print their identities, sleep for 2, 3 and 4 seconds, and finish.
+`idle` continues waiting for interrupts. The [process activity](examples/06-processes/README.md)
+explains the task table and assembly context switch.
+
+The build produces `build/cep/kernel.elf`. `make -C src` forwards to the root
+Makefile for compatibility with the course directory layout.
+
+Tasks share memory and machine-mode privileges on one emulated CPU. The kernel
+has no user-mode isolation, filesystem or keyboard input.
 
 ## Credits
 
-Developed by **Emilly Raiane Rodrigues**. Boot and platform support are based on code by Sébastien Viardot.
+Emilly Raiane Rodrigues — course project, September–December 2023.
 
-Support code includes Flux/OSKit, CMU/Mach and klibc; bitmap-font credits include Daniel Hepper, Marcel Sondaar and IBM. Attribution and license notices remain in the source. [COPYING.GPL-2](COPYING.GPL-2) accompanies the components referring to it.
+Boot and platform support are based on code by Sébastien Viardot. Runtime code
+includes Flux/OSKit, CMU/Mach and klibc. Font credits include Daniel Hepper,
+Marcel Sondaar and IBM. Source attribution and license notices are retained;
+see [COPYING.GPL-2](COPYING.GPL-2).

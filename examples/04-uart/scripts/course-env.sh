@@ -3,7 +3,7 @@
 set -eu
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$repo_dir"
-# Keep compiler and capture temporary files with the other build artifacts.
+# Keep compiler temporary files with the other build artifacts.
 if [ -z "${TMPDIR-}" ]; then
     mkdir -p build/tmp
     export TMPDIR="$repo_dir/build/tmp"
@@ -26,7 +26,7 @@ if printf '%s\n' "$dependencies" | awk '$1 == "libaio.so.1" && $2 == "=>" && $3 
         aio=$(ldconfig -p 2>/dev/null | awk '$1 == "libaio.so.1t64" && /x86-64/ { print $NF; exit }')
         if [ -n "$aio" ] && [ -f "$aio" ]; then
             mkdir -p build/host-libs
-            cp -f "$aio" build/host-libs/libaio.so.1
+            ln -sfn "$aio" build/host-libs/libaio.so.1
             export LD_LIBRARY_PATH="$repo_dir/build/host-libs${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
         fi
     fi

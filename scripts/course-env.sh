@@ -3,15 +3,15 @@
 set -eu
 repo_dir=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 cd "$repo_dir"
-# Keep compiler and capture temporary files with the other build artifacts.
+# Keep compiler temporary files with the other build artifacts.
 if [ -z "${TMPDIR-}" ]; then
     mkdir -p build/tmp
     export TMPDIR="$repo_dir/build/tmp"
 fi
 course_tools=${COURSE_TOOLS:-/matieres/4MMPCSEA/xinul}
-export CROSS_COMPILE="$course_tools/bin/riscv64-unknown-elf-"
-export QEMU="$course_tools/bin/qemu-system-riscv64"
-export RISCV_ARCH=rv64ima
+export CROSS_COMPILE="${CROSS_COMPILE:-$course_tools/bin/riscv64-unknown-elf-}"
+export QEMU="${QEMU:-$course_tools/bin/qemu-system-riscv64}"
+export RISCV_ARCH="${RISCV_ARCH:-rv64ima}"
 for tool in "${CROSS_COMPILE}gcc" "$QEMU"; do
     if [ ! -x "$tool" ]; then
         printf 'CEP tool not found: %s\nSet COURSE_TOOLS or use the normal installation from README.md.\n' "$tool" >&2

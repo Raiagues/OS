@@ -1,80 +1,105 @@
-# 03 — Scrolling the framebuffer
+# 03 Scrolling
 
-Write 100 numbered lines into a console whose display has only 90 text rows. Keep a header in the reserved top row while older output scrolls away.
+Move the framebuffer text area upward when the console reaches the bottom of
+the screen. The first row is reserved for a header.
 
-## Follow the code
+## Source files
 
-1. Initialize the UART and console.
-2. Write the header directly with `ecrit_car(0, column, character)`.
-3. A single loop calls `printf` for lines `00` through `99`.
-4. When the cursor reaches the bottom, `traite_car` calls `defilement`.
-5. `defilement` moves framebuffer rows upward with `memmove` and clears the final eight pixel rows with `memset`.
-6. Send `EVIDENCE: SCROLL PASS written=100 first_visible=12 last_visible=99` to UART and leave the screen visible.
+| File | Role |
+| --- | --- |
+| [src/main.c](src/main.c) | Draws a header and prints 100 numbered lines |
+| [src/console.c](src/console.c) | `traite_car` detects the bottom row; `defilement` moves the pixels |
+| [src/string.c](src/string.c) | Supplied `memmove` and `memset` implementations |
+| [src/font.c](src/font.c) | 8 × 8 character bitmaps |
 
-The header remains at row 0. The first visible numbered line is `12`; the last is `99`. UART still contains all 100 lines because scrolling changes framebuffer memory, not bytes already transmitted.
+## Moving one row
 
-Each text row is eight pixels high. The copy starts below the header and uses `memmove` because the source and destination regions overlap. Try lowering the loop bound below 88, then raise it again to observe when scrolling begins.
-
-`printf.c` and `doprnt.c` provide the local formatted-output runtime; the example itself is the short loop in [src/main.c](src/main.c).
-
-## Recorded output
-
-![Scroll example in QEMU](evidence/scroll.png)
-
-[UART output](evidence/scroll.txt) · [Capture report](evidence/report.json)
-
-## Run with Docker
-
-On Linux x86_64 with an X11 or XWayland desktop, install Docker, Xephyr and xauth. On Ubuntu/Debian, the package names are `docker.io`, `xserver-xephyr` and `xauth`. Docker must be running and accessible to your user; check with `docker info`.
-
-From this folder:
-
-```sh
-./scripts/run-container.sh
+```mermaid
+flowchart TD
+    A["Console reaches the bottom row"] --> B["Keep header at row 0"]
+    B --> C["memmove text upward by 8 pixel rows"]
+    C --> D["Clear the last text row"]
+    D --> E["Continue writing"]
 ```
 
-The script downloads a pinned image containing the RISC-V compiler and CEP QEMU, compiles this project, and opens a 1280 × 720 window. UART output appears in the terminal. Close the window or press Ctrl+C to stop. The script accepts no example selector: this folder is the whole example.
+One character row occupies `8 * 1280` pixels. In `defilement`:
 
-## Run with local CEP tools
+```c
+uint32_t largeur_pixel = BITS * DISPLAY_WIDTH;
+uint32_t *destination = (uint32_t *)ADRESSE_INITIAL + largeur_pixel;
+uint32_t *source = (uint32_t *)ADRESSE_INITIAL + 2 * largeur_pixel;
+uint32_t size = DISPLAY_WIDTH * (DISPLAY_HEIGHT - 2 * BITS) * sizeof(uint32_t);
+memmove(destination, source, size);
+```
 
-The graphical device belongs to QEMU's **CEP** machine. Standard QEMU packages do not include it. With the compiler and CEP QEMU installed under `/matieres/4MMPCSEA/xinul`, run:
+`destination` starts at text row 1 and `source` at row 2. Copying upward replaces
+row 1 with row 2, row 2 with row 3, and so on. The regions overlap, which is why
+this operation uses `memmove`. `memset` then clears the final eight pixel rows.
+
+```text
+Before                After
+row 0: header         row 0: header
+row 1: oldest line    row 1: next line
+row 2: next line      row 2: following line
+...                   ...
+last row: text        last row: empty
+```
+
+`main.c` prints lines 00–99. The serial terminal retains every line. The
+framebuffer retains the most recent lines while the header stays in place.
+
+## Build and run
+
+From the repository root:
 
 ```sh
+cd examples/03-scroll
 sh scripts/course-env.sh make check
 sh scripts/course-env.sh make
 ./run.sh
 ```
 
-For another installation directory:
+The scripts use the course tools at `/matieres/4MMPCSEA/xinul`: the RISC-V GCC
+compiler and the custom QEMU with the CEP machine. The executable is
+`build/cep/kernel.elf`. For another installation, set the directory explicitly:
 
 ```sh
 COURSE_TOOLS=/path/to/xinul ./run.sh
 ```
 
-With separately configured tools, use explicit overrides:
+To use Docker instead, run `./scripts/run-container.sh` in this folder.
+It requires Linux x86_64, Docker, Xephyr, xauth and an X11 or XWayland desktop.
+The Ubuntu/Debian packages are `docker.io`, `xserver-xephyr` and `xauth`.
+Check `docker info`; the launcher obtains the course compiler/QEMU image on
+first use. Both launch methods open the same activity. Close the window or
+press Ctrl+C to stop.
+
+To run without a window:
 
 ```sh
-make CROSS_COMPILE=/path/to/bin/riscv64-unknown-elf- \
-     QEMU=/path/to/qemu-system-riscv64 RISCV_ARCH=rv64ima run
+sh scripts/course-env.sh make run-serial
 ```
 
-GCC 11 bundled with CEP uses `rv64ima`; newer compilers can use the default `rv64ima_zicsr`. `make` builds `build/cep/kernel.elf`. `BUILD=build/custom` changes the output directory. `make run-serial` keeps the framebuffer offscreen and prints UART output in the terminal; exit with Ctrl+A, X. `make clean` removes the selected build directory.
+This still uses CEP; its graphics are offscreen. Exit with Ctrl+A, then X.
+The normal QEMU installation does not include this course machine.
 
-## Files to read
+To save the serial output after building, use:
 
-| File | Purpose |
-| --- | --- |
-| [src/main.c](src/main.c) | The complete example, starting at `kernel_start` |
-| [src/console.c](src/console.c) | Pixel writes, characters, cursor, control characters and scrolling |
-| [src/font.c](src/font.c) | The 8 × 8 bitmap font |
-| [src/uart.c](src/uart.c) | Polling output to the CEP UART |
-| [src/crt0.S](src/crt0.S) | Set up the boot stack, clear BSS, call C |
-| [src/kernel.lds](src/kernel.lds) | Place the ELF at CEP address `0x1000` |
-| [src/string.c](src/string.c) | The memory/string routines this example uses |
-| `Makefile` | Explicit local sources and fixed CEP build |
+```sh
+sh scripts/course-env.sh sh -c '
+  "$QEMU" -machine cep -bios none -kernel build/cep/kernel.elf \
+    -m 32M -smp 1 -display sdl -monitor none -serial file:build/uart.txt
+'
+```
 
-Every source, header, linker script and launcher needed by this example is inside this folder. You can copy the folder elsewhere and build it there. The only external requirements are the host tools or Docker image. Interrupts stay disabled; this static example has no clock, process table or scheduler.
+The saved bytes are in `build/uart.txt`. The screenshots below show the CEP
+framebuffer at 1280 × 720. Output was captured with the course GCC 11.1.0 and
+QEMU 6.2.50 tools. All source and launch files needed by this activity are local
+to this folder. [Attribution and licenses](../../README.md#credits).
 
-## Credits
+## QEMU output
 
-Source notices are retained in the local files. The font credits Daniel Hepper, Marcel Sondaar and IBM and declares public-domain terms. The small runtime includes code with its own notices; see the source headers and [COPYING.GPL-2](COPYING.GPL-2).
+![Console after printing 100 lines](output/scroll.png)
+
+[Serial output](output/scroll.txt). At the end, the graphical text area shows
+lines 12–99 and the last row is available for further output.

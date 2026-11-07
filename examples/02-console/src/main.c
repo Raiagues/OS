@@ -22,7 +22,5 @@ void kernel_start(void)
     console_putbytes("\tZ", 2);
     place_curseur(11, 0);
     printf("Rows 2-6: LF, BS, CR, HT. Row 9: tab at the right edge.\n");
-    const char *done = "EVIDENCE: CONSOLE PASS\n";
-    while (*done) traite_car_uart(*done++);
     for (;;) hlt();
 }
